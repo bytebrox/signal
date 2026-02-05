@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Server-side Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Lazy initialization to avoid build-time errors
+function getSupabase(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!url || !key) {
+    return null
+  }
+  
+  return createClient(url, key)
+}
 
 // DexScreener API - no auth needed
 const DEXSCREENER_API = 'https://api.dexscreener.com/latest/dex'
@@ -133,6 +139,15 @@ function generateTags(stats: { pnl: number; trades: number; tokens: number }): s
 
 export async function POST(request: Request) {
   try {
+    const supabase = getSupabase()
+    
+    if (!supabase) {
+      return NextResponse.json(
+        { success: false, error: 'Database not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY to environment variables.' },
+        { status: 500 }
+      )
+    }
+    
     // Optional: Verify secret for cron job
     const { searchParams } = new URL(request.url)
     const secret = searchParams.get('secret')
@@ -219,6 +234,12 @@ export async function POST(request: Request) {
 // GET endpoint to check status
 export async function GET() {
   try {
+    const supabase = getSupabase()
+    
+    if (!supabase) {
+      return NextResponse.json({ status: 'not_configured', message: 'Database not configured' })
+    }
+    
     const { data, error } = await supabase
       .from('tracked_wallets')
       .select('updated_at')
@@ -233,6 +254,6 @@ export async function GET() {
       endpoint: 'POST /api/scan to trigger scan'
     })
   } catch {
-    return NextResponse.json({ status: 'error', message: 'Database not configured' })
+    return NextResponse.json({ status: 'error', message: 'Database error' })
   }
 }
