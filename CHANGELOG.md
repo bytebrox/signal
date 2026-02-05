@@ -16,8 +16,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Background Images** - Section-specific backgrounds
   - "How SIGNAL works" section with bg2.png and fade effect
   - CTA section with bg1.png rotated 180°
+- **Custom Logo** - Brand logo added throughout the app
+  - Navigation (landing page + dashboard)
+  - Footer
+  - Favicon and Apple Touch Icon
 - **Community Link** - X.com link in navigation and footer
-  - Labeled as "Community"
+- **Custom Wallet Modal** - Solana Wallet Adapter styled to match app design
+  - Dark background with blur effect
+  - Emerald green hover states
+  - Rounded corners and consistent typography
+  - Custom dropdown menu styling
 
 ### Changed
 - **Box Design Overhaul** - All boxes now have:
@@ -30,10 +38,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - "How it works" section: clean numbered design without icons
   - "Features" section: removed generic AI-looking icons
   - Removed "Manual scans" and "Solana native" features (not relevant)
+  - New tagline: "Follow the insiders"
 - **Dashboard Cleanup**
   - Removed "Quick Actions" panel
   - Sticky header with solid background
   - All content readable over background image
+- **Metadata** - Enhanced SEO and social sharing
+  - Open Graph tags
+  - Twitter Card tags
+  - Domain set to justasignal.com
 
 ### Removed
 - Generic SVG icons from feature boxes

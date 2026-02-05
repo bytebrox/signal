@@ -270,7 +270,7 @@ export default function Home() {
       <section id="features" className="py-24 px-6 bg-surface/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built for serious traders</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built for the trenches</h2>
             <p className="text-muted max-w-xl mx-auto">
               Everything you need to find and follow smart money
             </p>
