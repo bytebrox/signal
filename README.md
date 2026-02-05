@@ -12,8 +12,10 @@ SIGNAL automatically scans trending Solana tokens, analyzes on-chain transaction
 
 ### Features
 
-- **Automated Wallet Discovery** - Scans top volume tokens via Codex API and extracts active traders
-- **On-Chain Analysis** - Uses Helius Enhanced Transactions API to parse swap and transfer activity
+- **Wallet Authentication** - Connect with Phantom or other Solana wallets to access the app
+- **Automated Wallet Discovery** - Scans top volume tokens via Codex API and extracts profitable traders
+- **Favorites System** - Save wallets to your personal watchlist, synced across devices
+- **On-Chain Analysis** - Uses Codex tokenTopTraders API for real PnL data
 - **Historical Tracking** - Records wallet performance across multiple tokens over time
 - **Aggregated Statistics** - Total PnL, appearances, trade counts, and win rates
 - **Token History** - See exactly which tokens each wallet was found trading
@@ -45,7 +47,7 @@ SIGNAL automatically scans trending Solana tokens, analyzes on-chain transaction
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/signal.git
+   git clone https://github.com/bytebrox/signal.git
    cd signal
    ```
 
@@ -93,6 +95,21 @@ SIGNAL automatically scans trending Solana tokens, analyzes on-chain transaction
 
 ## Database Schema
 
+### `users`
+User accounts (wallet-based authentication):
+- `wallet_address` - Solana wallet address (unique)
+- `created_at` - Account creation timestamp
+- `last_login_at` - Last login timestamp
+- `is_premium` - Premium status flag
+- `settings` - User preferences (JSON)
+
+### `user_favorites`
+Saved wallets per user:
+- `user_id` - Reference to users table
+- `wallet_address` - Tracked wallet address
+- `nickname` - Optional custom name
+- `notes` - Optional notes
+
 ### `tracked_wallets`
 Stores aggregated wallet statistics:
 - `address` - Solana wallet address
@@ -118,6 +135,11 @@ Records each wallet+token discovery:
 | `/api/scan` | GET | Get scan status and last scan time |
 | `/api/wallets` | GET | List tracked wallets with filtering |
 | `/api/wallets/[address]` | GET | Get wallet details + token history |
+| `/api/users` | POST | Create or login user by wallet address |
+| `/api/users` | GET | Get user by wallet address |
+| `/api/favorites` | GET | Get user's favorite wallets |
+| `/api/favorites` | POST | Add wallet to favorites |
+| `/api/favorites` | DELETE | Remove wallet from favorites |
 
 ### Query Parameters for `/api/wallets`
 

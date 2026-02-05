@@ -50,7 +50,8 @@ export async function GET(
     return NextResponse.json({
       wallet,
       tokenHistory: history || [],
-      totalTokens: history?.length || 0
+      // Use history length if available, otherwise fall back to wallet.appearances
+      totalTokens: (history && history.length > 0) ? history.length : (wallet.appearances || 0)
     })
     
   } catch (error) {

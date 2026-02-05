@@ -4,6 +4,50 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.4.0] - 2026-02-05
+
+### Added
+- **Wallet Authentication** - Connect with Solana wallet to access the app
+  - Solana Wallet Adapter integration (Phantom support)
+  - User accounts created automatically on first connect
+  - Persistent sessions across devices
+- **Favorites System** - Save wallets to your personal watchlist
+  - Track button on each wallet in the dashboard
+  - Dedicated "Wallets" tab showing all favorites
+  - Remove favorites with one click
+  - Favorites stored per user in database
+- **Navigation Tabs** - Full app navigation
+  - Dashboard (wallet scanner)
+  - Wallets (your favorites)
+  - Settings (account info, disconnect)
+- **Settings Page** - Account management
+  - View wallet address and member since date
+  - Plan status (Free/Premium)
+  - Stats overview
+  - Disconnect wallet option
+- **New Landing Page** - Redesigned homepage
+  - Live preview card with animated wallet ticker
+  - Clear feature explanations
+  - Modern design without generic AI look
+
+### Changed
+- Landing page completely redesigned for authenticity
+- App requires wallet connection to access
+- "Track" button now functional (saves to favorites)
+
+### Database
+- New `users` table for wallet-based accounts
+- New `user_favorites` table for saved wallets
+- Updated schema with proper indexes and RLS policies
+
+### Dependencies
+- Added `@solana/wallet-adapter-base`
+- Added `@solana/wallet-adapter-react`
+- Added `@solana/wallet-adapter-react-ui`
+- Added `@solana/wallet-adapter-phantom`
+- Added `@solana/web3.js`
+- Added `graphql` (peer dependency for Codex SDK)
+
 ## [0.3.0] - 2026-02-05
 
 ### Added

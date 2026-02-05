@@ -1,6 +1,50 @@
 -- SIGNAL Database Schema for Supabase
 -- Run this in your Supabase SQL Editor
 
+-- Users Table (for wallet authentication)
+CREATE TABLE IF NOT EXISTS users (
+  id BIGSERIAL PRIMARY KEY,
+  wallet_address TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_login_at TIMESTAMPTZ DEFAULT NOW(),
+  is_premium BOOLEAN DEFAULT FALSE,
+  settings JSONB DEFAULT '{}'::jsonb
+);
+
+-- User Favorites - wallets a user wants to track
+CREATE TABLE IF NOT EXISTS user_favorites (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  wallet_address TEXT NOT NULL,
+  nickname TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, wallet_address)
+);
+
+-- Indexes for users
+CREATE INDEX IF NOT EXISTS idx_users_wallet ON users(wallet_address);
+CREATE INDEX IF NOT EXISTS idx_favorites_user ON user_favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_wallet ON user_favorites(wallet_address);
+
+-- RLS for users
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own data" ON users
+  FOR SELECT USING (true);
+
+CREATE POLICY "Service role can manage users" ON users
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- RLS for user_favorites
+ALTER TABLE user_favorites ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own favorites" ON user_favorites
+  FOR SELECT USING (true);
+
+CREATE POLICY "Service role can manage favorites" ON user_favorites
+  FOR ALL USING (auth.role() = 'service_role');
+
 -- Tracked Wallets Table
 CREATE TABLE IF NOT EXISTS tracked_wallets (
   id BIGSERIAL PRIMARY KEY,
