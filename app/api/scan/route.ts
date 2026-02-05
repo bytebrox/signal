@@ -1,139 +1,181 @@
 import { NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { Codex, TokenRankingAttribute, RankingDirection } from '@codex-data/sdk'
 
-// Lazy initialization to avoid build-time errors
+// Lazy initialization
 function getSupabase(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
-  if (!url || !key) {
-    return null
-  }
-  
+  if (!url || !key) return null
   return createClient(url, key)
 }
 
-// DexScreener API - no auth needed
-const DEXSCREENER_API = 'https://api.dexscreener.com/latest/dex'
+// Codex SDK
+const CODEX_API_KEY = process.env.CODEX_API_KEY
+const SOLANA_NETWORK = 1399811149
 
-interface DexScreenerToken {
-  chainId: string
-  pairAddress: string
-  baseToken: { address: string; symbol: string; name: string }
-  priceChange: { h24: number }
-  volume: { h24: number }
-  liquidity: { usd: number }
-  txns: { h24: { buys: number; sells: number } }
+function getCodex(): Codex | null {
+  if (!CODEX_API_KEY) return null
+  return new Codex(CODEX_API_KEY)
 }
 
-interface TopTrader {
+// Helius
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY
+const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`
+
+interface TokenData {
   address: string
+  symbol: string
+  name: string
+  priceChange24: number
+  volume24: number
+  liquidity: number
+}
+
+interface WalletTokenFind {
+  walletAddress: string
+  tokenAddress: string
+  tokenSymbol: string
   pnl: number
   trades: number
 }
 
-// Fetch top gainers from Solana
-async function fetchTopGainers(): Promise<DexScreenerToken[]> {
+// Fetch trending tokens from Codex (sorted by Volume24)
+async function fetchTrendingTokens(limit: number = 30): Promise<TokenData[]> {
+  const codex = getCodex()
+  if (!codex) {
+    console.error('Codex API key not configured')
+    return []
+  }
+
   try {
-    // Get tokens with high 24h gains on Solana
-    const response = await fetch(`${DEXSCREENER_API}/search?q=sol`, {
-      headers: { 'Accept': 'application/json' }
+    console.log('Fetching tokens from Codex...')
+    
+    const response = await codex.queries.filterTokens({
+      filters: {
+        network: [SOLANA_NETWORK],
+        liquidity: { gte: 5000 },
+        volume24: { gte: 10000 },
+      },
+      rankings: [{ 
+        attribute: TokenRankingAttribute.Volume24, 
+        direction: RankingDirection.Desc 
+      }],
+      limit,
+    })
+
+    const tokens = response?.filterTokens?.results || []
+    console.log(`Codex returned ${tokens.length} tokens`)
+
+    return tokens.map((data: any) => {
+      const token = data.token || data
+      return {
+        address: token.address || '',
+        symbol: token.symbol || '???',
+        name: token.name || 'Unknown',
+        priceChange24: (data.change24 || 0) * 100,
+        volume24: data.volume24 || 0,
+        liquidity: data.liquidity || 0,
+      }
+    }).filter((t: TokenData) => t.address && t.address.length > 30)
+  } catch (error) {
+    console.error('Error fetching from Codex:', error)
+    return []
+  }
+}
+
+// Fetch token signatures from Helius
+async function fetchTokenSignatures(tokenMint: string, limit = 100): Promise<string[]> {
+  if (!HELIUS_API_KEY) return []
+  
+  try {
+    const response = await fetch(HELIUS_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getSignaturesForAddress',
+        params: [tokenMint, { limit }]
+      })
     })
     
-    if (!response.ok) throw new Error('DexScreener API error')
-    
     const data = await response.json()
-    
-    // Filter for Solana tokens with >100% gain and decent volume
-    return (data.pairs || [])
-      .filter((p: DexScreenerToken) => 
-        p.chainId === 'solana' && 
-        p.priceChange?.h24 > 100 &&
-        p.volume?.h24 > 50000 &&
-        p.liquidity?.usd > 10000
-      )
-      .slice(0, 20) // Top 20 gainers
+    return (data.result || []).map((sig: { signature: string }) => sig.signature)
   } catch (error) {
-    console.error('Error fetching gainers:', error)
+    console.error('Error fetching signatures:', error)
     return []
   }
 }
 
-// Fetch top traders for a specific token pair
-async function fetchTopTraders(pairAddress: string): Promise<TopTrader[]> {
+// Parse transactions using Helius Enhanced API
+async function parseTransactions(signatures: string[]): Promise<any[]> {
+  if (!signatures.length || !HELIUS_API_KEY) return []
+  
   try {
-    // DexScreener doesn't have direct top traders endpoint
-    // In production, you'd use Helius or Birdeye API here
-    // For now, we'll simulate with pair data
+    const response = await fetch(`https://api.helius.xyz/v0/transactions?api-key=${HELIUS_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transactions: signatures })
+    })
     
-    const response = await fetch(`${DEXSCREENER_API}/pairs/solana/${pairAddress}`)
     if (!response.ok) return []
+    return await response.json()
+  } catch (error) {
+    console.error('Error parsing transactions:', error)
+    return []
+  }
+}
+
+// Extract traders from parsed transactions
+function extractTraders(transactions: any[], tokenMint: string): Map<string, { buys: number; sells: number }> {
+  const traders = new Map<string, { buys: number; sells: number }>()
+  
+  for (const tx of transactions) {
+    if (!tx) continue
     
-    const data = await response.json()
-    const pair = data.pair || data.pairs?.[0]
+    const feePayer = tx.feePayer
+    if (!feePayer || feePayer.length !== 44) continue
     
-    if (!pair) return []
+    const existing = traders.get(feePayer) || { buys: 0, sells: 0 }
     
-    // Simulate top traders based on txn data
-    // In production: Use Helius getSignaturesForAddress + parse transactions
-    const simulatedTraders: TopTrader[] = []
-    const txCount = pair.txns?.h24?.buys || 0
-    
-    // Generate realistic-looking wallet addresses
-    for (let i = 0; i < Math.min(10, Math.floor(txCount / 10)); i++) {
-      const randomPnl = Math.floor(Math.random() * 500) + 50
-      const randomTrades = Math.floor(Math.random() * 20) + 5
+    // Check swap events
+    if (tx.type === 'SWAP' && tx.events?.swap) {
+      const swapInfo = tx.events.swap
+      const tokenIn = swapInfo.tokenInputs?.[0]?.mint
+      const tokenOut = swapInfo.tokenOutputs?.[0]?.mint
       
-      simulatedTraders.push({
-        address: generateSolanaAddress(),
-        pnl: randomPnl,
-        trades: randomTrades
-      })
+      if (tokenOut === tokenMint) existing.buys++
+      else if (tokenIn === tokenMint) existing.sells++
     }
     
-    return simulatedTraders
-  } catch (error) {
-    console.error('Error fetching traders:', error)
-    return []
+    // Check token transfers
+    if (tx.tokenTransfers) {
+      for (const transfer of tx.tokenTransfers) {
+        if (transfer.mint === tokenMint) {
+          if (transfer.toUserAccount === feePayer) existing.buys++
+          else if (transfer.fromUserAccount === feePayer) existing.sells++
+        }
+      }
+    }
+    
+    if (existing.buys > 0 || existing.sells > 0) {
+      traders.set(feePayer, existing)
+    }
   }
-}
-
-// Generate a realistic Solana address
-function generateSolanaAddress(): string {
-  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-  let address = ''
-  for (let i = 0; i < 44; i++) {
-    address += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return address
-}
-
-// Aggregate wallets across multiple tokens
-function aggregateWallets(allTraders: Map<string, { pnl: number; trades: number; tokens: number }>) {
-  const wallets = Array.from(allTraders.entries()).map(([address, stats]) => ({
-    address,
-    pnl_percent: stats.pnl,
-    win_rate: Math.min(95, 50 + stats.tokens * 5 + Math.random() * 20),
-    total_trades: stats.trades,
-    winning_tokens: stats.tokens,
-    avg_return: Math.floor(stats.pnl / stats.tokens),
-    last_trade_at: new Date().toISOString(),
-    tags: generateTags(stats)
-  }))
   
-  // Sort by combined score
-  return wallets
-    .sort((a, b) => (b.pnl_percent * b.winning_tokens) - (a.pnl_percent * a.winning_tokens))
-    .slice(0, 50) // Top 50
+  return traders
 }
 
-function generateTags(stats: { pnl: number; trades: number; tokens: number }): string[] {
+// Generate tags based on stats
+function generateTags(appearances: number, totalPnl: number, totalTrades: number): string[] {
   const tags: string[] = []
-  if (stats.tokens >= 3) tags.push('Multi-Winner')
-  if (stats.pnl > 500) tags.push('High PnL')
-  if (stats.trades > 50) tags.push('Active')
-  if (stats.pnl / stats.tokens > 200) tags.push('Sniper')
-  if (tags.length === 0) tags.push('Tracker')
+  if (appearances >= 5) tags.push('Consistent')
+  if (appearances >= 3) tags.push('Multi-Winner')
+  if (totalPnl > 500) tags.push('High PnL')
+  if (totalTrades > 30) tags.push('Active')
+  if (appearances >= 2 && totalPnl > 200) tags.push('Smart Money')
+  if (tags.length === 0) tags.push('Tracked')
   return tags
 }
 
@@ -142,96 +184,197 @@ export async function POST(request: Request) {
     const supabase = getSupabase()
     
     if (!supabase) {
-      return NextResponse.json(
-        { success: false, error: 'Database not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY to environment variables.' },
-        { status: 500 }
-      )
+      return NextResponse.json({ success: false, error: 'Database not configured' }, { status: 500 })
     }
     
-    // Optional: Verify secret for cron job
-    const { searchParams } = new URL(request.url)
-    const secret = searchParams.get('secret')
+    if (!CODEX_API_KEY) {
+      return NextResponse.json({ success: false, error: 'Codex API key not configured' }, { status: 500 })
+    }
     
-    // In production, verify: if (secret !== process.env.CRON_SECRET) return unauthorized
+    if (!HELIUS_API_KEY) {
+      return NextResponse.json({ success: false, error: 'Helius API key not configured' }, { status: 500 })
+    }
     
-    console.log('Starting wallet scan...')
+    console.log('Starting wallet scan with Codex + Helius...')
     
-    // Step 1: Fetch top gaining tokens
-    const gainers = await fetchTopGainers()
-    console.log(`Found ${gainers.length} gaining tokens`)
+    // Step 1: Get trending tokens from Codex
+    const tokens = await fetchTrendingTokens(30)
+    console.log(`Found ${tokens.length} trending tokens from Codex`)
     
-    if (gainers.length === 0) {
+    if (tokens.length === 0) {
       return NextResponse.json({ 
         success: true, 
-        message: 'No significant gainers found today',
+        message: 'No tokens found from Codex',
         walletsUpdated: 0 
       })
     }
     
-    // Step 2: Fetch top traders for each token
-    const walletMap = new Map<string, { pnl: number; trades: number; tokens: number }>()
+    // Step 2: Collect wallet findings
+    const findings: WalletTokenFind[] = []
     
-    for (const token of gainers) {
-      const traders = await fetchTopTraders(token.pairAddress)
+    for (const token of tokens) {
+      console.log(`Scanning ${token.symbol} (${token.address.slice(0, 8)}...)`)
       
-      for (const trader of traders) {
-        const existing = walletMap.get(trader.address)
-        if (existing) {
-          existing.pnl += trader.pnl
-          existing.trades += trader.trades
-          existing.tokens += 1
-        } else {
-          walletMap.set(trader.address, {
-            pnl: trader.pnl,
-            trades: trader.trades,
-            tokens: 1
-          })
-        }
+      const signatures = await fetchTokenSignatures(token.address, 50)
+      if (signatures.length === 0) continue
+      
+      const parsedTxs = await parseTransactions(signatures)
+      const traders = extractTraders(parsedTxs, token.address)
+      
+      for (const [wallet, activity] of traders) {
+        const estimatedPnl = activity.buys > 0 
+          ? Math.floor(Math.abs(token.priceChange24) * (activity.buys / (activity.buys + activity.sells + 1)) * 0.8)
+          : 0
+        
+        findings.push({
+          walletAddress: wallet,
+          tokenAddress: token.address,
+          tokenSymbol: token.symbol,
+          pnl: estimatedPnl,
+          trades: activity.buys + activity.sells
+        })
       }
       
-      // Small delay to avoid rate limits
-      await new Promise(r => setTimeout(r, 100))
+      await new Promise(r => setTimeout(r, 150))
     }
     
-    console.log(`Aggregated ${walletMap.size} unique wallets`)
+    console.log(`Found ${findings.length} wallet+token combinations`)
     
-    // Step 3: Aggregate and rank wallets
-    const topWallets = aggregateWallets(walletMap)
+    if (findings.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'No wallet findings',
+        tokensScanned: tokens.length,
+        walletsUpdated: 0
+      })
+    }
     
-    // Step 4: Upsert to Supabase
-    const { error } = await supabase
+    // Step 3: Check for NEW findings
+    const uniqueWallets = [...new Set(findings.map(f => f.walletAddress))]
+    
+    const { data: existingHistory } = await supabase
+      .from('wallet_token_history')
+      .select('wallet_address, token_address')
+      .in('wallet_address', uniqueWallets)
+    
+    const historySet = new Set(
+      (existingHistory || []).map(h => `${h.wallet_address}:${h.token_address}`)
+    )
+    
+    const newFindings = findings.filter(f => 
+      !historySet.has(`${f.walletAddress}:${f.tokenAddress}`)
+    )
+    
+    console.log(`${newFindings.length} NEW findings (${findings.length - newFindings.length} already tracked)`)
+    
+    if (newFindings.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'No new wallet+token combinations found',
+        tokensScanned: tokens.length,
+        newFindings: 0,
+        walletsUpdated: 0
+      })
+    }
+    
+    // Step 4: Insert new findings into history
+    const historyInserts = newFindings.map(f => ({
+      wallet_address: f.walletAddress,
+      token_address: f.tokenAddress,
+      token_symbol: f.tokenSymbol,
+      pnl_at_discovery: f.pnl,
+      trades_at_discovery: f.trades,
+      discovered_at: new Date().toISOString()
+    }))
+    
+    await supabase.from('wallet_token_history').insert(historyInserts)
+    
+    // Step 5: Aggregate per wallet
+    const walletUpdates = new Map<string, { pnl: number; trades: number; tokens: number }>()
+    
+    for (const finding of newFindings) {
+      const existing = walletUpdates.get(finding.walletAddress) || { pnl: 0, trades: 0, tokens: 0 }
+      existing.pnl += finding.pnl
+      existing.trades += finding.trades
+      existing.tokens += 1
+      walletUpdates.set(finding.walletAddress, existing)
+    }
+    
+    // Step 6: Update wallets
+    const walletsToUpdate = [...walletUpdates.keys()]
+    
+    const { data: existingWallets } = await supabase
       .from('tracked_wallets')
-      .upsert(
-        topWallets.map(w => ({
-          ...w,
-          updated_at: new Date().toISOString()
-        })),
-        { onConflict: 'address' }
-      )
+      .select('*')
+      .in('address', walletsToUpdate)
     
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    const existingMap = new Map((existingWallets || []).map(w => [w.address, w]))
+    
+    const upsertData = walletsToUpdate.map(address => {
+      const newStats = walletUpdates.get(address)!
+      const existing = existingMap.get(address)
+      
+      if (existing) {
+        const newTotalPnl = (existing.total_pnl || 0) + newStats.pnl
+        const newAppearances = (existing.appearances || 1) + newStats.tokens
+        const newTotalTrades = (existing.total_trades || 0) + newStats.trades
+        const newWinningTokens = (existing.winning_tokens || 0) + newStats.tokens
+        
+        return {
+          address,
+          total_pnl: newTotalPnl,
+          pnl_percent: Math.floor(newTotalPnl / newAppearances),
+          appearances: newAppearances,
+          total_trades: newTotalTrades,
+          winning_tokens: newWinningTokens,
+          avg_return: Math.floor(newTotalPnl / newWinningTokens),
+          win_rate: Math.min(95, 50 + newWinningTokens * 5),
+          tags: generateTags(newAppearances, newTotalPnl, newTotalTrades),
+          last_trade_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      } else {
+        return {
+          address,
+          total_pnl: newStats.pnl,
+          pnl_percent: newStats.pnl,
+          appearances: newStats.tokens,
+          total_trades: newStats.trades,
+          winning_tokens: newStats.tokens,
+          avg_return: newStats.tokens > 0 ? Math.floor(newStats.pnl / newStats.tokens) : 0,
+          win_rate: Math.min(95, 50 + newStats.tokens * 5),
+          tags: generateTags(newStats.tokens, newStats.pnl, newStats.trades),
+          last_trade_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      }
+    })
+    
+    const { error: upsertError } = await supabase
+      .from('tracked_wallets')
+      .upsert(upsertData, { onConflict: 'address' })
+    
+    if (upsertError) {
+      console.error('Wallet upsert error:', upsertError)
+      return NextResponse.json({ success: false, error: upsertError.message }, { status: 500 })
     }
     
     return NextResponse.json({
       success: true,
-      message: 'Wallet scan completed',
-      tokensScanned: gainers.length,
-      walletsUpdated: topWallets.length,
+      message: 'Scan completed with Codex',
+      tokensScanned: tokens.length,
+      newFindings: newFindings.length,
+      walletsUpdated: upsertData.length,
       timestamp: new Date().toISOString()
     })
     
   } catch (error) {
     console.error('Scan error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// GET endpoint to check status
 export async function GET() {
   try {
     const supabase = getSupabase()
@@ -240,18 +383,22 @@ export async function GET() {
       return NextResponse.json({ status: 'not_configured', message: 'Database not configured' })
     }
     
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('tracked_wallets')
       .select('updated_at')
       .order('updated_at', { ascending: false })
       .limit(1)
     
-    const lastUpdate = data?.[0]?.updated_at || null
+    const { count: historyCount } = await supabase
+      .from('wallet_token_history')
+      .select('*', { count: 'exact', head: true })
     
     return NextResponse.json({
       status: 'ready',
-      lastScan: lastUpdate,
-      endpoint: 'POST /api/scan to trigger scan'
+      codexConfigured: !!CODEX_API_KEY,
+      heliusConfigured: !!HELIUS_API_KEY,
+      lastScan: data?.[0]?.updated_at || null,
+      totalHistoryEntries: historyCount || 0
     })
   } catch {
     return NextResponse.json({ status: 'error', message: 'Database error' })
