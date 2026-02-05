@@ -933,19 +933,20 @@ export default function App() {
                     <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
                       <div>
                         <div className="text-sm text-muted">Member Since</div>
-                        <div className="text-sm mt-1">{new Date(user.created_at).toLocaleDateString()}</div>
+                        <div className="text-sm mt-1">{new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                      <div>
-                        <div className="text-sm text-muted">Plan</div>
-                        <div className="text-sm mt-1">{user.is_premium ? 'Premium' : 'Free'}</div>
+                    <div className="p-3 bg-white/5 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-muted">Plan</div>
+                          <div className="text-sm mt-1">Free</div>
+                        </div>
+                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-medium rounded-full border border-emerald-500/20">
+                          Beta
+                        </span>
                       </div>
-                      {!user.is_premium && (
-                        <button className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity">
-                          Upgrade
-                        </button>
-                      )}
+                      <p className="text-xs text-muted mt-2">All features are free during beta.</p>
                     </div>
                   </>
                 )}
