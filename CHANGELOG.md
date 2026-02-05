@@ -4,6 +4,42 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.0] - 2026-02-05
+
+### Added
+- **Hero Video Background** - Animated video background on landing page
+  - Autoplay, loop, muted for seamless experience
+  - Full viewport height hero section
+- **Dashboard Background** - Subtle background image with hero.png
+  - Fixed position, 30% opacity
+  - Doesn't interfere with content readability
+- **Background Images** - Section-specific backgrounds
+  - "How SIGNAL works" section with bg2.png and fade effect
+  - CTA section with bg1.png rotated 180°
+- **Community Link** - X.com link in navigation and footer
+  - Labeled as "Community"
+
+### Changed
+- **Box Design Overhaul** - All boxes now have:
+  - Solid dark backgrounds for readability (rgba 95% opacity)
+  - Subtle green gradient accents on top
+  - Backdrop blur effect
+  - Hover glow effects preserved
+- **Landing Page Polish**
+  - Stats bar redesigned with gradient lines and horizontal layout
+  - "How it works" section: clean numbered design without icons
+  - "Features" section: removed generic AI-looking icons
+  - Removed "Manual scans" and "Solana native" features (not relevant)
+- **Dashboard Cleanup**
+  - Removed "Quick Actions" panel
+  - Sticky header with solid background
+  - All content readable over background image
+
+### Removed
+- Generic SVG icons from feature boxes
+- Quick Actions panel from dashboard sidebar
+- "Alerts" feature references
+
 ## [0.4.0] - 2026-02-05
 
 ### Added

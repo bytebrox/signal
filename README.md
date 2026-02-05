@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/gitlogo.png" alt="SIGNAL Logo" width="200">
+</p>
+
 # SIGNAL
 
 Smart Money Intelligence Platform for Solana - Track profitable wallets across trending tokens.
@@ -20,7 +24,8 @@ SIGNAL automatically scans trending Solana tokens, analyzes on-chain transaction
 - **Aggregated Statistics** - Total PnL, appearances, trade counts, and win rates
 - **Token History** - See exactly which tokens each wallet was found trading
 - **Time-Based Filtering** - Filter by discovery date or last activity (24h, 7d, 30d)
-- **Modern UI** - Clean, dark-themed dashboard with real-time updates
+- **Modern UI** - Clean, dark-themed dashboard with animated backgrounds and subtle gradients
+- **Open Source** - Fully transparent, check the code and contribute
 
 ## Tech Stack
 
@@ -191,6 +196,12 @@ For production, set up a cron job to run scans automatically:
 4. **Deduplication**: Checks if wallet+token combination already exists
 5. **Aggregation**: Updates wallet statistics (only counting new findings)
 6. **Storage**: Persists to Supabase for historical tracking
+
+## Links
+
+- **Website**: [justasignal.com](https://justasignal.com)
+- **GitHub**: [github.com/bytebrox/signal](https://github.com/bytebrox/signal)
+- **Community**: [x.com/bytebrox](https://x.com/bytebrox)
 
 ## Contributing
 

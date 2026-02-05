@@ -305,13 +305,25 @@ export default function App() {
   const shortAddress = (addr: string) => `${addr.slice(0, 4)}...${addr.slice(-4)}`
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg relative">
+      {/* Background image */}
+      <div 
+        className="fixed inset-0 opacity-30 pointer-events-none"
+        style={{
+          backgroundImage: `url('/hero.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      />
+      
       {/* Header */}
-      <header className="border-b border-border">
+      <header className="border-b border-border bg-bg/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-xl font-semibold tracking-tight">
-              SIGNAL
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/logo_w.png" alt="SIGNAL" className="h-6 w-auto" />
+              <span className="text-xl font-semibold tracking-tight">SIGNAL</span>
             </Link>
             <nav className="hidden md:flex items-center gap-6 text-sm text-muted">
               <button 
@@ -422,7 +434,12 @@ export default function App() {
         )}
 
         {/* Scan Controls */}
-        <div className="mb-8 p-6 rounded-xl bg-surface border border-border">
+        <div 
+          className="mb-8 p-6 rounded-xl border border-border overflow-hidden relative backdrop-blur-sm"
+          style={{
+            background: `radial-gradient(ellipse at top left, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+          }}
+        >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h2 className="font-semibold text-lg">Wallet Scanner</h2>
@@ -498,11 +515,19 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="p-5 rounded-xl bg-surface border border-border"
+              className="p-5 rounded-xl border border-border overflow-hidden relative group hover:border-emerald-500/30 transition-colors backdrop-blur-sm"
+              style={{
+                background: `radial-gradient(ellipse at top, rgba(16,185,129,0.06) 0%, transparent 60%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+              }}
             >
-              <div className="text-sm text-muted mb-1">{stat.label}</div>
-              <div className="text-2xl font-semibold">{stat.value}</div>
-              <div className="text-xs text-muted mt-1">{stat.change}</div>
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
+                style={{ background: `radial-gradient(ellipse at center, rgba(16,185,129,0.08) 0%, transparent 70%)` }}
+              />
+              <div className="relative z-10">
+                <div className="text-sm text-muted mb-1">{stat.label}</div>
+                <div className="text-2xl font-semibold">{stat.value}</div>
+                <div className="text-xs text-muted mt-1">{stat.change}</div>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -510,7 +535,12 @@ export default function App() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Table */}
           <div className="lg:col-span-2">
-            <div className="rounded-xl bg-surface border border-border overflow-hidden">
+            <div 
+              className="rounded-xl border border-border overflow-hidden relative backdrop-blur-sm"
+              style={{
+                background: `radial-gradient(ellipse at top left, rgba(16,185,129,0.06) 0%, transparent 40%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+              }}
+            >
               <div className="px-6 py-4 border-b border-border">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-semibold">Top Performing Wallets</h2>
@@ -653,7 +683,10 @@ export default function App() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-xl bg-surface border border-border overflow-hidden"
+                className="rounded-xl border border-border overflow-hidden relative backdrop-blur-sm"
+                style={{
+                  background: `radial-gradient(ellipse at top right, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+                }}
               >
                 <div className="px-6 py-4 border-b border-border flex items-center justify-between">
                   <h2 className="font-semibold">Wallet Details</h2>
@@ -756,24 +789,13 @@ export default function App() {
               </motion.div>
             )}
 
-            {/* Quick Actions */}
-            <div className="rounded-xl bg-surface border border-border p-6">
-              <h2 className="font-semibold mb-4">Quick Actions</h2>
-              <div className="space-y-3">
-                <button className="w-full px-4 py-3 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors text-sm">
-                  Set Up Alerts
-                </button>
-                <button className="w-full px-4 py-3 border border-border rounded-lg hover:border-white/20 transition-colors text-sm">
-                  Export Data
-                </button>
-                <button className="w-full px-4 py-3 border border-border rounded-lg hover:border-white/20 transition-colors text-sm">
-                  API Access
-                </button>
-              </div>
-            </div>
-
             {/* Info */}
-            <div className="rounded-xl bg-surface border border-border p-6">
+            <div 
+              className="rounded-xl border border-border p-6 relative overflow-hidden backdrop-blur-sm"
+              style={{
+                background: `radial-gradient(ellipse at bottom right, rgba(16,185,129,0.06) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+              }}
+            >
               <h2 className="font-semibold mb-3">How it works</h2>
               <p className="text-sm text-muted leading-relaxed">
                 SIGNAL scans trending Solana tokens by volume, analyzes on-chain transactions, 
@@ -796,7 +818,12 @@ export default function App() {
             </div>
 
             {favoriteWallets.length === 0 ? (
-              <div className="rounded-xl bg-surface border border-border p-12 text-center">
+              <div 
+                className="rounded-xl border border-border p-12 text-center relative overflow-hidden backdrop-blur-sm"
+                style={{
+                  background: `radial-gradient(ellipse at center, rgba(16,185,129,0.05) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+                }}
+              >
                 <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">★</span>
                 </div>
@@ -812,7 +839,12 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div className="rounded-xl bg-surface border border-border overflow-hidden">
+              <div 
+                className="rounded-xl border border-border overflow-hidden relative backdrop-blur-sm"
+                style={{
+                  background: `radial-gradient(ellipse at top left, rgba(16,185,129,0.06) 0%, transparent 40%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+                }}
+              >
                 <div className="px-6 py-4 border-b border-border">
                   <h2 className="font-semibold">Tracked Wallets ({favoriteWallets.length})</h2>
                 </div>
@@ -875,7 +907,12 @@ export default function App() {
             </div>
 
             {/* Account Info */}
-            <div className="rounded-xl bg-surface border border-border p-6">
+            <div 
+              className="rounded-xl border border-border p-6 relative overflow-hidden backdrop-blur-sm"
+              style={{
+                background: `radial-gradient(ellipse at top left, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+              }}
+            >
               <h2 className="font-semibold mb-4">Account</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
@@ -916,7 +953,12 @@ export default function App() {
             </div>
 
             {/* Stats */}
-            <div className="rounded-xl bg-surface border border-border p-6">
+            <div 
+              className="rounded-xl border border-border p-6 relative overflow-hidden backdrop-blur-sm"
+              style={{
+                background: `radial-gradient(ellipse at top right, rgba(16,185,129,0.06) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+              }}
+            >
               <h2 className="font-semibold mb-4">Your Stats</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-white/5 rounded-lg text-center">
@@ -931,7 +973,12 @@ export default function App() {
             </div>
 
             {/* Danger Zone */}
-            <div className="rounded-xl bg-surface border border-red-500/20 p-6">
+            <div 
+              className="rounded-xl border border-red-500/20 p-6 relative overflow-hidden backdrop-blur-sm"
+              style={{
+                background: `radial-gradient(ellipse at top left, rgba(239,68,68,0.08) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+              }}
+            >
               <h2 className="font-semibold mb-4 text-red-400">Danger Zone</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">

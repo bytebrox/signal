@@ -28,13 +28,15 @@ export default function Home() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-bg/90 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold tracking-tight">
-            SIGNAL
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/logo_w.png" alt="SIGNAL" className="h-6 w-auto" />
+            <span className="text-xl font-bold tracking-tight">SIGNAL</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted">
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#how" className="hover:text-white transition-colors">How it works</a>
             <a href="https://github.com/bytebrox/signal" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
+            <a href="https://x.com/bytebrox" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Community</a>
           </div>
           <Link 
             href="/app" 
@@ -46,11 +48,19 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="relative pt-32 pb-24 px-6 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent" />
+      <section className="relative min-h-screen flex items-center px-6 overflow-hidden">
+        {/* Background video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
+        >
+          <source src="/hero.mp4" type="video/mp4" />
+        </video>
         
-        <div className="relative max-w-6xl mx-auto">
+        <div className="relative z-10 max-w-6xl mx-auto w-full py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left - Text */}
             <motion.div
@@ -58,10 +68,6 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 mb-6">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                Live on Solana Mainnet
-              </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
                 Track the wallets
@@ -72,8 +78,7 @@ export default function Home() {
               </h1>
 
               <p className="text-lg text-muted mb-8 leading-relaxed max-w-lg">
-                We scan Solana for profitable traders and surface the wallets 
-                that consistently win. No noise, no influencers — just on-chain data.
+                Follow the insiders. We track wallets that consistently profit before everyone else catches on.
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -162,27 +167,52 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-8 px-6 border-y border-border bg-surface/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <section className="py-12 px-6 relative overflow-hidden">
+        {/* Subtle gradient line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+        
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-x-16 gap-y-6">
             {[
-              { value: 'Real-time', label: 'On-chain scanning' },
-              { value: 'Multi-token', label: 'Pattern detection' },
-              { value: 'Solana', label: 'Network support' },
-              { value: 'Free', label: 'Open source' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-lg font-semibold mb-1">{stat.value}</div>
-                <div className="text-xs text-muted">{stat.label}</div>
-              </div>
+              { value: 'Real-time', label: 'scanning' },
+              { value: 'Multi-token', label: 'detection' },
+              { value: 'Solana', label: 'native' },
+              { value: 'Open source', label: 'always' },
+            ].map((stat, i) => (
+              <motion.div 
+                key={stat.label} 
+                className="flex items-center gap-3"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <span className="text-emerald-500 text-lg">◆</span>
+                <div>
+                  <span className="font-medium">{stat.value}</span>
+                  <span className="text-muted ml-2 text-sm">{stat.label}</span>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section id="how" className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
+      <section id="how" className="py-24 px-6 relative overflow-hidden">
+        {/* Background image with fade to transparent at bottom */}
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url('/bg3.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
+          }}
+        />
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">How SIGNAL works</h2>
             <p className="text-muted max-w-xl mx-auto">
@@ -196,32 +226,16 @@ export default function Home() {
                 step: '01',
                 title: 'Scan tokens',
                 desc: 'We continuously monitor trending Solana tokens — high volume, price action, new launches.',
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                )
               },
               {
                 step: '02',
                 title: 'Find winners',
                 desc: 'For each token, we extract wallets with realized profits. Not just traders — actual winners.',
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                )
               },
               {
                 step: '03',
                 title: 'Track patterns',
                 desc: 'Wallets appearing profitable across multiple tokens get flagged. Save them, watch them, follow their moves.',
-                icon: (
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )
               },
             ].map((item, i) => (
               <motion.div
@@ -230,16 +244,22 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="relative p-6 rounded-2xl bg-surface border border-border group hover:border-emerald-500/30 transition-colors"
+                className="relative p-6 rounded-2xl border border-border group hover:border-emerald-500/30 transition-all"
+                style={{
+                  background: `radial-gradient(ellipse at ${i === 0 ? 'top left' : i === 1 ? 'top center' : 'top right'}, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(to bottom, rgba(255,255,255,0.02), transparent)`
+                }}
               >
-                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-bg border border-border flex items-center justify-center text-xs font-mono text-muted">
-                  {item.step}
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" 
+                  style={{
+                    background: `radial-gradient(ellipse at center, rgba(16,185,129,0.1) 0%, transparent 70%)`
+                  }}
+                />
+                <div className="relative z-10">
+                  <div className="text-4xl font-bold text-emerald-500/20 mb-4 font-mono">{item.step}</div>
+                  <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted leading-relaxed">{item.desc}</p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-4">
-                  {item.icon}
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                <p className="text-sm text-muted leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -256,14 +276,24 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 gap-6">
             {[
-              { title: 'Wallet watchlist', desc: 'Save wallets to your personal list. Syncs with your connected wallet.' },
-              { title: 'Token history', desc: 'See every token a wallet was found in and their PnL at time of discovery.' },
-              { title: 'Performance stats', desc: 'Total PnL, win rate, trade count, and more for each tracked wallet.' },
-              { title: 'Manual scans', desc: 'Trigger scans whenever you want. Fresh data on demand.' },
-              { title: 'Solana native', desc: 'Connect with Phantom or any Solana wallet. Your data stays with you.' },
-              { title: 'Open source', desc: 'Fully transparent. Check the code, run it yourself, contribute.' },
+              { 
+                title: 'Wallet watchlist', 
+                desc: 'Save wallets to your personal list. Track your favorite traders and get notified when they make moves.',
+              },
+              { 
+                title: 'Token history', 
+                desc: 'See every token a wallet was found in and their PnL at time of discovery. Full transparency.',
+              },
+              { 
+                title: 'Performance stats', 
+                desc: 'Total PnL, win rate, trade count, and more for each tracked wallet. Data-driven decisions.',
+              },
+              { 
+                title: 'Open source', 
+                desc: 'Fully transparent. Check the code, run it yourself, contribute. No hidden agendas.',
+              },
             ].map((feature, i) => (
               <motion.div
                 key={feature.title}
@@ -271,19 +301,39 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="p-5 rounded-xl border border-border hover:bg-white/[0.02] transition-colors"
+                className="group p-6 rounded-2xl border border-border hover:border-emerald-500/30 transition-all relative"
+                style={{
+                  background: `radial-gradient(ellipse at ${i % 2 === 0 ? 'top left' : 'top right'}, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(to bottom, rgba(255,255,255,0.02), transparent)`
+                }}
               >
-                <h3 className="font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted">{feature.desc}</p>
+                {/* Hover glow */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" 
+                  style={{ background: `radial-gradient(ellipse at center, rgba(16,185,129,0.1) 0%, transparent 70%)` }}
+                />
+                <div className="relative z-10">
+                  <h3 className="text-lg font-semibold mb-3">{feature.title}</h3>
+                  <p className="text-sm text-muted leading-relaxed">{feature.desc}</p>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+      {/* CTA with Background Image */}
+      <section className="relative py-32 px-6 overflow-hidden">
+        {/* Rotated background image with fade to transparent at top */}
+        <div 
+          className="absolute inset-0 rotate-180 opacity-30"
+          style={{
+            backgroundImage: `url('/bg1.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            maskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 90%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 90%)'
+          }}
+        />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -311,11 +361,15 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="font-semibold">SIGNAL</div>
+          <div className="flex items-center gap-2">
+            <img src="/logo_w.png" alt="SIGNAL" className="h-5 w-auto" />
+            <span className="font-semibold">SIGNAL</span>
+          </div>
           <div className="flex items-center gap-6 text-sm text-muted">
             <a href="https://github.com/bytebrox/signal" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
+            <a href="https://x.com/bytebrox" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Community</a>
           </div>
-          <div className="text-sm text-muted">Built on Solana</div>
+          <div className="text-sm text-muted">Built for the trenches</div>
         </div>
       </footer>
     </main>
