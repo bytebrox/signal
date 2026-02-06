@@ -94,6 +94,7 @@ export default function App() {
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTag, setActiveTag] = useState('')
+  const [hideInactive, setHideInactive] = useState(false)
   
   // Global stats (for all wallets in DB, not just current page)
   const [globalStats, setGlobalStats] = useState({
@@ -231,7 +232,7 @@ export default function App() {
   }
 
   // Fetch wallets from API with pagination
-  const fetchWallets = async (range?: string, filter?: string, page?: number, query?: string, tag?: string) => {
+  const fetchWallets = async (range?: string, filter?: string, page?: number, query?: string, tag?: string, inactive?: boolean) => {
     try {
       const pageNum = page || currentPage
       const offset = (pageNum - 1) * walletsPerPage
@@ -245,8 +246,10 @@ export default function App() {
       
       const searchVal = query !== undefined ? query : searchQuery
       const tagVal = tag !== undefined ? tag : activeTag
+      const hideInactiveVal = inactive !== undefined ? inactive : hideInactive
       if (searchVal) params.set('search', searchVal)
       if (tagVal) params.set('tag', tagVal)
+      if (hideInactiveVal) params.set('hideInactive', 'true')
       
       const res = await fetch(`/api/wallets?${params}`)
       const data = await res.json()
@@ -365,6 +368,40 @@ export default function App() {
     setCurrentPage(1)
     setLoading(true)
     fetchWallets(timeRange, filterType, 1, searchQuery, newTag)
+  }
+
+  // Handle hide inactive toggle
+  const handleHideInactive = () => {
+    const next = !hideInactive
+    setHideInactive(next)
+    setCurrentPage(1)
+    setLoading(true)
+    fetchWallets(timeRange, filterType, 1, searchQuery, activeTag, next)
+  }
+
+  // Format "Last Trade" relative time
+  const formatLastSeen = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return '—'
+    const now = Date.now()
+    const then = new Date(dateStr).getTime()
+    const diffMs = now - then
+    if (diffMs < 0) return 'just now'
+    const mins = Math.floor(diffMs / 60000)
+    if (mins < 1) return 'just now'
+    if (mins < 60) return `${mins}m ago`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    if (days < 30) return `${days}d ago`
+    const months = Math.floor(days / 30)
+    return `${months}mo ago`
+  }
+
+  // Check if a wallet is considered inactive (> 14 days)
+  const isWalletInactive = (dateStr: string | null | undefined): boolean => {
+    if (!dateStr) return true
+    const diffMs = Date.now() - new Date(dateStr).getTime()
+    return diffMs > 14 * 24 * 60 * 60 * 1000
   }
   
   // Export wallets as CSV
@@ -770,6 +807,21 @@ export default function App() {
                         {tag}
                       </button>
                     ))}
+                    {/* Hide Inactive Toggle */}
+                    <button
+                      onClick={handleHideInactive}
+                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors flex items-center gap-1.5 ${
+                        hideInactive
+                          ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                          : 'border-border text-muted hover:border-white/20 hover:text-white'
+                      }`}
+                      title="Hide wallets inactive for more than 14 days"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                      Hide Inactive
+                    </button>
                   </div>
                 </div>
                 
@@ -833,6 +885,7 @@ export default function App() {
                         <th className="text-right px-3 sm:px-6 py-3 font-medium hidden sm:table-cell">Avg PnL</th>
                         <th className="text-right px-3 sm:px-6 py-3 font-medium hidden md:table-cell">Trades</th>
                         <th className="text-right px-3 sm:px-6 py-3 font-medium hidden md:table-cell">Tokens</th>
+                        <th className="text-right px-3 sm:px-6 py-3 font-medium hidden lg:table-cell">Last Trade</th>
                         <th className="text-right px-3 sm:px-6 py-3 font-medium"></th>
                       </tr>
                     </thead>
@@ -872,6 +925,11 @@ export default function App() {
                           <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-muted hidden md:table-cell">{wallet.total_trades}</td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 text-right hidden md:table-cell">
                             <span className="px-2 py-1 bg-white/5 rounded text-xs">{wallet.appearances || wallet.winning_tokens}×</span>
+                          </td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-right hidden lg:table-cell">
+                            <span className={`text-xs ${isWalletInactive(wallet.last_trade_at) ? 'text-amber-400/70' : 'text-muted'}`}>
+                              {formatLastSeen(wallet.last_trade_at)}
+                            </span>
                           </td>
                           <td className="px-2 sm:px-6 py-3 sm:py-4 text-right">
                             <button 
@@ -1253,6 +1311,9 @@ export default function App() {
                                   <div className="text-right">
                                     <div className="text-emerald-500 font-semibold">+{fav.walletData.total_pnl || fav.walletData.pnl_percent}%</div>
                                     <div className="text-xs text-muted">{fav.walletData.total_trades} trades</div>
+                                    <div className={`text-[10px] mt-0.5 ${isWalletInactive(fav.walletData.last_trade_at) ? 'text-amber-400/70' : 'text-muted/60'}`}>
+                                      {formatLastSeen(fav.walletData.last_trade_at)}
+                                    </div>
                                   </div>
                                 )}
                                 <button

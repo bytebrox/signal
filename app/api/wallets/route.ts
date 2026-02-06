@@ -32,6 +32,8 @@ export async function GET(request: Request) {
     const filterType = searchParams.get('filterType') || 'discovered' // discovered, activity
     const search = searchParams.get('search') || ''
     const tag = searchParams.get('tag') || ''
+    const hideInactive = searchParams.get('hideInactive') === 'true'
+    const inactiveDays = parseInt(searchParams.get('inactiveDays') || '14')
     
     // Calculate date threshold
     let dateThreshold: Date | null = null
@@ -68,6 +70,12 @@ export async function GET(request: Request) {
     // Apply tag filter
     if (tag) {
       query = query.contains('tags', [tag])
+    }
+    
+    // Apply inactive filter — hide wallets whose last_trade_at is older than N days
+    if (hideInactive) {
+      const cutoff = new Date(Date.now() - inactiveDays * 24 * 60 * 60 * 1000).toISOString()
+      query = query.gte('last_trade_at', cutoff)
     }
     
     // Apply sorting and pagination

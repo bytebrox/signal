@@ -132,6 +132,9 @@ export const config = {
     
     // Refresh interval for data (ms) - 0 = manual only
     autoRefreshMs: 0,
+
+    // Days since last trade after which a wallet is considered "inactive"
+    inactiveDays: 14,
   },
 
   // ===========================================
