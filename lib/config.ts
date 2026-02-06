@@ -18,13 +18,13 @@ export const config = {
   // ===========================================
   scanner: {
     // How many trending tokens to scan per run
-    tokensToScan: 30,
+    tokensToScan: 100,
     
     // How many top traders to fetch per token
     tradersPerToken: 25,
     
     // Delay between API calls (ms) to avoid rate limits
-    apiDelayMs: 150,
+    apiDelayMs: 100,
     
     // Minimum trades required to be saved
     minTotalTrades: 1,

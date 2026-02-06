@@ -71,7 +71,7 @@ async function fetchTrendingTokens(limit: number = config.scanner.tokensToScan):
           direction: RankingDirection.Desc 
         }],
         statsType: 'FILTERED' as any, // Remove MEV, show organic volume
-        limit: Math.min(limit, 50),
+        limit: Math.min(limit, 200),
       })
       
       const trending = trendingResponse?.filterTokens?.results || []
