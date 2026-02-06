@@ -363,6 +363,12 @@ async function fetchTokenTraders(
     const wallets = (response?.filterTokenWallets?.results || []) as any[]
     const traders: TopTraderData[] = []
     
+    // Debug: log available fields from first wallet to verify lastTransactionAt
+    if (wallets.length > 0 && wallets[0]) {
+      console.log(`  [DEBUG] Wallet response fields: ${Object.keys(wallets[0]).join(', ')}`)
+      console.log(`  [DEBUG] lastTransactionAt value: ${wallets[0].lastTransactionAt}`)
+    }
+    
     for (const wallet of wallets) {
       if (!wallet || !wallet.address) continue
       
