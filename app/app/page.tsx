@@ -94,6 +94,11 @@ export default function App() {
   const [favoritesLoading, setFavoritesLoading] = useState<Set<string>>(new Set())
   const [favoriteWallets, setFavoriteWallets] = useState<Array<{ wallet_address: string; nickname: string | null; walletData: TrackedWallet | null }>>([])
   
+  // Selected favorite wallet for details view
+  const [selectedFavorite, setSelectedFavorite] = useState<string | null>(null)
+  const [favoriteDetails, setFavoriteDetails] = useState<WalletDetails | null>(null)
+  const [loadingFavoriteDetails, setLoadingFavoriteDetails] = useState(false)
+  
   // Navigation state
   const [activeTab, setActiveTab] = useState<'dashboard' | 'wallets' | 'settings'>('dashboard')
   
@@ -262,6 +267,25 @@ export default function App() {
       console.error('Error fetching wallet details:', error)
     } finally {
       setLoadingDetails(false)
+    }
+  }
+  
+  // Fetch favorite wallet details with chart data
+  const fetchFavoriteDetails = async (address: string) => {
+    setLoadingFavoriteDetails(true)
+    setFavoriteDetails(null)
+    
+    try {
+      const res = await fetch(`/api/wallets/${address}?chart=true&days=30`)
+      const data = await res.json()
+      
+      if (!data.error) {
+        setFavoriteDetails(data)
+      }
+    } catch (error) {
+      console.error('Error fetching favorite wallet details:', error)
+    } finally {
+      setLoadingFavoriteDetails(false)
     }
   }
 
@@ -932,59 +956,258 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div 
-                className="rounded-xl border border-border overflow-hidden relative backdrop-blur-sm"
-                style={{
-                  background: `radial-gradient(ellipse at top left, rgba(16,185,129,0.06) 0%, transparent 40%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
-                }}
-              >
-                <div className="px-6 py-4 border-b border-border">
-                  <h2 className="font-semibold">Tracked Wallets ({favoriteWallets.length})</h2>
-                </div>
-                <div className="divide-y divide-border">
-                  {favoriteWallets.map((fav) => (
-                    <div key={fav.wallet_address} className="p-4 hover:bg-white/[0.02] transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center text-sm font-mono text-emerald-400">
-                            {fav.wallet_address.slice(0, 2)}
-                          </div>
-                          <div>
-                            <div className="font-mono text-sm">
-                              {fav.wallet_address.slice(0, 6)}...{fav.wallet_address.slice(-6)}
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Wallet List */}
+                <div className="lg:col-span-2">
+                  <div 
+                    className="rounded-xl border border-border overflow-hidden relative backdrop-blur-sm"
+                    style={{
+                      background: `radial-gradient(ellipse at top left, rgba(16,185,129,0.06) 0%, transparent 40%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+                    }}
+                  >
+                    <div className="px-6 py-4 border-b border-border">
+                      <h2 className="font-semibold">Tracked Wallets ({favoriteWallets.length})</h2>
+                    </div>
+                    <div className="divide-y divide-border">
+                      {favoriteWallets.map((fav) => (
+                        <div 
+                          key={fav.wallet_address} 
+                          onClick={() => {
+                            setSelectedFavorite(fav.wallet_address)
+                            fetchFavoriteDetails(fav.wallet_address)
+                          }}
+                          className={`p-4 hover:bg-white/[0.02] transition-colors cursor-pointer ${
+                            selectedFavorite === fav.wallet_address ? 'bg-emerald-500/5 border-l-2 border-l-emerald-500' : ''
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center text-sm font-mono text-emerald-400">
+                                {fav.wallet_address.slice(0, 2)}
+                              </div>
+                              <div>
+                                <div className="font-mono text-sm">
+                                  {fav.wallet_address.slice(0, 6)}...{fav.wallet_address.slice(-6)}
+                                </div>
+                                {fav.nickname && (
+                                  <div className="text-xs text-muted">{fav.nickname}</div>
+                                )}
+                              </div>
                             </div>
-                            {fav.nickname && (
-                              <div className="text-xs text-muted">{fav.nickname}</div>
-                            )}
+                            <div className="flex items-center gap-4">
+                              {fav.walletData && (
+                                <div className="text-right">
+                                  <div className="text-emerald-500 font-semibold">+{fav.walletData.total_pnl || fav.walletData.pnl_percent}%</div>
+                                  <div className="text-xs text-muted">{fav.walletData.total_trades} trades</div>
+                                </div>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleFavorite(fav.wallet_address)
+                                }}
+                                className="px-3 py-1.5 text-xs bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          {fav.walletData && (
-                            <div className="text-right">
-                              <div className="text-emerald-500 font-semibold">+{fav.walletData.total_pnl || fav.walletData.pnl_percent}%</div>
-                              <div className="text-xs text-muted">{fav.walletData.total_trades} trades</div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Wallet Details Sidebar */}
+                <div className="lg:col-span-1">
+                  {selectedFavorite ? (
+                    <div 
+                      className="rounded-xl border border-border overflow-hidden sticky top-24 backdrop-blur-sm"
+                      style={{
+                        background: `radial-gradient(ellipse at top right, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+                      }}
+                    >
+                      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                        <h2 className="font-semibold">Wallet Details</h2>
+                        <button
+                          onClick={() => {
+                            setSelectedFavorite(null)
+                            setFavoriteDetails(null)
+                          }}
+                          className="text-muted hover:text-white transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      
+                      {loadingFavoriteDetails ? (
+                        <div className="p-8 text-center">
+                          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
+                          <p className="text-sm text-muted">Loading details...</p>
+                        </div>
+                      ) : favoriteDetails ? (
+                        <div className="p-4 space-y-4">
+                          {/* Address */}
+                          <div className="p-3 bg-white/5 rounded-lg">
+                            <div className="text-xs text-muted mb-1">Address</div>
+                            <div className="font-mono text-sm break-all">{selectedFavorite}</div>
+                          </div>
+                          
+                          {/* Stats Grid */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3 bg-white/5 rounded-lg">
+                              <div className="text-xs text-muted mb-1">Total PnL</div>
+                              <div className="text-emerald-500 font-semibold">
+                                +{favoriteDetails.wallet?.total_pnl || favoriteDetails.wallet?.pnl_percent || 0}%
+                              </div>
+                            </div>
+                            <div className="p-3 bg-white/5 rounded-lg">
+                              <div className="text-xs text-muted mb-1">Avg PnL</div>
+                              <div className="text-emerald-500 font-semibold">
+                                +{favoriteDetails.wallet?.pnl_percent || 0}%
+                              </div>
+                            </div>
+                            <div className="p-3 bg-white/5 rounded-lg">
+                              <div className="text-xs text-muted mb-1">Trades</div>
+                              <div className="font-semibold">{favoriteDetails.wallet?.total_trades || 0}</div>
+                            </div>
+                            <div className="p-3 bg-white/5 rounded-lg">
+                              <div className="text-xs text-muted mb-1">Tokens</div>
+                              <div className="font-semibold">{favoriteDetails.totalTokens || 0}</div>
+                            </div>
+                          </div>
+                          
+                          {/* Tags */}
+                          {favoriteDetails.wallet?.tags && favoriteDetails.wallet.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {favoriteDetails.wallet.tags.map((tag: string) => (
+                                <span
+                                  key={tag}
+                                  className={`px-2 py-1 rounded-full text-xs ${
+                                    tag === 'Smart Money' ? 'bg-emerald-500/20 text-emerald-400' :
+                                    tag === 'Whale' ? 'bg-blue-500/20 text-blue-400' :
+                                    tag === 'Insider' ? 'bg-purple-500/20 text-purple-400' :
+                                    tag === 'Consistent' ? 'bg-amber-500/20 text-amber-400' :
+                                    'bg-white/10 text-white/70'
+                                  }`}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
                             </div>
                           )}
-                          <div className="flex items-center gap-2">
+                          
+                          {/* 30-Day PnL Chart */}
+                          {favoriteDetails.chartData && favoriteDetails.chartData.length > 0 && (
+                            <div>
+                              <div className="text-xs text-muted mb-2">30-Day PnL</div>
+                              <div className="h-40 w-full">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={100}>
+                                  <AreaChart data={favoriteDetails.chartData}>
+                                    <defs>
+                                      <linearGradient id="favPnlGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                      </linearGradient>
+                                    </defs>
+                                    <XAxis 
+                                      dataKey="date" 
+                                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                                      tickLine={false}
+                                      axisLine={false}
+                                      tickFormatter={(value) => {
+                                        const date = new Date(value)
+                                        return `${date.getMonth()+1}/${date.getDate()}`
+                                      }}
+                                    />
+                                    <YAxis 
+                                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                                      tickLine={false}
+                                      axisLine={false}
+                                      tickFormatter={(value) => `$${(value/1000).toFixed(0)}k`}
+                                      width={45}
+                                    />
+                                    <Tooltip 
+                                      contentStyle={{ 
+                                        backgroundColor: 'rgba(9,9,11,0.95)', 
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '8px',
+                                        fontSize: '12px'
+                                      }}
+                                      formatter={(value: number | undefined) => [`$${(value || 0).toLocaleString()}`, 'PnL']}
+                                      labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                                    />
+                                    <Area 
+                                      type="monotone" 
+                                      dataKey="pnl" 
+                                      stroke="#10b981" 
+                                      fill="url(#favPnlGradient)"
+                                      strokeWidth={2}
+                                    />
+                                  </AreaChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Token History */}
+                          {favoriteDetails.tokenHistory && favoriteDetails.tokenHistory.length > 0 && (
+                            <div>
+                              <div className="text-xs text-muted mb-2">Token History</div>
+                              <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {favoriteDetails.tokenHistory.map((token: TokenHistory, idx: number) => (
+                                  <div key={idx} className="flex items-center justify-between p-2 bg-white/5 rounded-lg text-sm">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium">{token.token_symbol || 'Unknown'}</span>
+                                    </div>
+                                    <div className="text-emerald-500">+{token.pnl_at_discovery}%</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* External Links */}
+                          <div className="flex gap-2 pt-2">
                             <a
-                              href={`https://solscan.io/account/${fav.wallet_address}`}
+                              href={`https://solscan.io/account/${selectedFavorite}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-3 py-1.5 text-xs border border-border rounded-lg hover:border-white/30 transition-colors"
+                              className="flex-1 px-4 py-2 text-center text-sm border border-border rounded-lg hover:border-white/30 transition-colors"
                             >
                               Solscan
                             </a>
-                            <button
-                              onClick={() => toggleFavorite(fav.wallet_address)}
-                              className="px-3 py-1.5 text-xs bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
+                            <a
+                              href={`https://birdeye.so/profile/${selectedFavorite}?chain=solana`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 px-4 py-2 text-center text-sm border border-border rounded-lg hover:border-white/30 transition-colors"
                             >
-                              Remove
-                            </button>
+                              Birdeye
+                            </a>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="p-8 text-center text-muted text-sm">
+                          Failed to load details
+                        </div>
+                      )}
                     </div>
-                  ))}
+                  ) : (
+                    <div 
+                      className="rounded-xl border border-border p-8 text-center backdrop-blur-sm"
+                      style={{
+                        background: `radial-gradient(ellipse at center, rgba(16,185,129,0.05) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
+                      }}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
+                        <span className="text-xl">👈</span>
+                      </div>
+                      <p className="text-sm text-muted">
+                        Click on a wallet to see details, PnL chart, and token history
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
