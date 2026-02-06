@@ -23,6 +23,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [liveWallets, setLiveWallets] = useState<LiveWallet[]>(fallbackWallets)
   const [loading, setLoading] = useState(true)
+  const [scrolled, setScrolled] = useState(false)
 
   // Format time ago
   const timeAgo = (date: string) => {
@@ -62,6 +63,15 @@ export default function Home() {
     fetchWallets()
   }, [])
 
+  // Scroll detection for nav background
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   useEffect(() => {
     setMounted(true)
     const interval = setInterval(() => {
@@ -72,15 +82,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#050505] text-white overflow-x-hidden">
-      {/* Ambient Background */}
-      <div className="fixed inset-0 pointer-events-none">
+      {/* Ambient Background - z-0 so section backgrounds can layer above */}
+      <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[150px]" />
         <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-emerald-600/5 rounded-full blur-[120px]" />
         <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-white/[0.02] rounded-full blur-[100px]" />
       </div>
 
       {/* Nav - Full Width */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-8 lg:px-16 py-5">
+      <nav className={`fixed top-0 left-0 right-0 z-50 px-8 lg:px-16 py-5 transition-all duration-300 ${
+        scrolled ? 'bg-[#050505]/90 backdrop-blur-xl border-b border-white/5' : ''
+      }`}>
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <img src="/logo_w.png" alt="SIGNAL" className="h-7 w-auto" />
@@ -312,19 +324,19 @@ export default function Home() {
               step: '01',
               title: 'Scan Trending Tokens',
               desc: 'We continuously monitor trending Solana tokens with high volume, strong momentum, and fresh launches.',
-              gradient: 'from-emerald-500/20 to-transparent',
+              bg: '/bg1.png',
             },
             {
               step: '02',
               title: 'Extract Winners',
               desc: 'For each token, we find wallets with high realized profits that are actively trading. Not paper gains — real money.',
-              gradient: 'from-white/10 to-transparent',
+              bg: '/bg2.png',
             },
             {
               step: '03',
               title: 'Track & Follow',
               desc: 'Save wallets to your watchlist. See their complete history, PnL charts, and which tokens they are moving into next.',
-              gradient: 'from-emerald-600/20 to-transparent',
+              bg: '/bg3.png',
             },
           ].map((item, i) => (
             <motion.div
@@ -335,8 +347,17 @@ export default function Home() {
               transition={{ delay: i * 0.15 }}
               className="group relative p-8 lg:p-10 rounded-3xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-500 overflow-hidden"
             >
-              {/* Background Gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              {/* Background Image */}
+              <div 
+                className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-500"
+                style={{
+                  backgroundImage: `url('${item.bg}')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+              {/* Dark overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/95 via-[#050505]/70 to-[#050505]/40" />
               
               <div className="relative z-10">
                 <div className="text-6xl lg:text-7xl font-bold text-white/5 group-hover:text-emerald-500/20 transition-colors duration-500 mb-6">{item.step}</div>
@@ -349,7 +370,7 @@ export default function Home() {
       </section>
 
       {/* Features - Full Width Bento */}
-      <section id="features" className="py-32 px-8 lg:px-16 bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent">
+      <section id="features" className="py-32 px-8 lg:px-16">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -391,7 +412,7 @@ export default function Home() {
             },
             { 
               title: 'Auto Scanning', 
-              desc: 'Cron job runs every 15 minutes automatically.',
+              desc: 'Continuous scanning around the clock. No manual work needed.',
               icon: '↻',
               span: '',
             },
@@ -421,11 +442,22 @@ export default function Home() {
       </section>
 
       {/* CTA - Full Width */}
-      <section className="py-32 px-8 lg:px-16 relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/30 via-transparent to-transparent" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/20 rounded-full blur-[150px]" />
+      <section className="pt-32 pb-32 px-8 lg:px-16 relative overflow-hidden z-[1]">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-[1]">
+          {/* Hero Image */}
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              backgroundImage: `url('/hero.png')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center bottom',
+              maskImage: 'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(0,0,0,0.5) 35%, black 55%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(0,0,0,0.5) 35%, black 55%)',
+            }}
+          />
+          {/* Glow */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/15 rounded-full blur-[150px]" />
         </div>
         
         <motion.div

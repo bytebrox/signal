@@ -4,6 +4,32 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.8.0] - 2026-02-06
+
+### Added
+- **Modern Full-Width Landing Page** - Complete redesign
+  - Full-width layout using entire viewport (no centered container)
+  - Asymmetric 7/5 hero grid with larger text
+  - Live Feed shows real wallet data from database (with fallback)
+  - Scroll-triggered sticky nav with blur background
+  - Marquee stats bar with infinite scroll animation
+  - Bento grid features section with varying spans
+  - Background images (bg1/bg2/bg3) on "How it works" cards
+  - hero.png background on CTA section with overlay fade
+  - Scroll indicator animation on hero
+  - GitHub button with icon in hero
+  - "Live scanning active" badge
+
+### Changed
+- Landing page now fetches latest wallets from `/api/wallets` for live feed
+- API `/api/wallets` returns `last_token_symbol` per wallet from history
+- Navigation becomes opaque with backdrop-blur on scroll
+- Removed specific numbers/percentages from landing copy (more generic)
+
+### Removed
+- Centered `max-w-6xl` container constraint on landing page
+- Mock-only wallet data (replaced with real DB data)
+
 ## [0.7.0] - 2026-02-06
 
 ### Added
