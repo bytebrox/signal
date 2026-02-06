@@ -4,6 +4,34 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.0] - 2026-02-06
+
+### Added
+- **Automated Scanning** - Cron job support for automatic wallet discovery
+  - API key authentication for `/api/scan` endpoint
+  - `SCAN_API_KEY` environment variable for secure access
+  - Compatible with cron-job.org and similar services
+- **Wallets Tab Details** - Full wallet details in favorites view
+  - Click any tracked wallet to see complete details
+  - 30-day PnL chart with area visualization
+  - Stats grid: Total PnL, Avg PnL, Trades, Tokens
+  - Tag display (Smart Money, Whale, Insider, etc.)
+  - Token history with individual PnL per token
+  - Direct links to Solscan & Birdeye
+  - Two-column layout with sticky details panel
+
+### Changed
+- Removed manual "Run Scan" button (automated via cron job)
+- Updated empty state message to reflect automatic scanning
+- Wallets tab now shows "Click on a wallet to see details"
+
+### Fixed
+- PnL chart in Wallets tab now correctly uses `realizedProfitUsd` dataKey
+
+### Security
+- Scan endpoint now requires Bearer token authentication
+- API key validated against `SCAN_API_KEY` environment variable
+
 ## [0.6.0] - 2026-02-05
 
 ### Added

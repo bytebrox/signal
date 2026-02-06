@@ -18,10 +18,11 @@ SIGNAL automatically scans trending Solana tokens, analyzes on-chain transaction
 
 - **Wallet Authentication** - Connect with Phantom or other Solana wallets to access the app
 - **Insider Wallet Discovery** - Scans trending tokens and finds wallets with 500%+ profit
+- **Automated Scanning** - Cron job support with API key authentication
 - **Aggressive Filtering** - Only active, high-performing wallets (no bots, no inactive, no transfers)
-- **Favorites System** - Save wallets to your personal watchlist, synced across devices
+- **Favorites System** - Save wallets to your personal watchlist with full details view
 - **On-Chain Analysis** - Uses Codex API for real PnL data and wallet charts
-- **30-Day PnL Charts** - Visual profit/loss history for each wallet
+- **30-Day PnL Charts** - Visual profit/loss history for each wallet (Dashboard & Wallets tab)
 - **Historical Tracking** - Records wallet performance across multiple tokens over time
 - **Aggregated Statistics** - Total PnL, appearances, trade counts, and win rates
 - **Token History** - See exactly which tokens each wallet was found trading

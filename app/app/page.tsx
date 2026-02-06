@@ -1101,8 +1101,8 @@ export default function App() {
                           {favoriteDetails.chartData && favoriteDetails.chartData.length > 0 && (
                             <div>
                               <div className="text-xs text-muted mb-2">30-Day PnL</div>
-                              <div className="h-40 w-full">
-                                <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={100}>
+                              <div className="h-40 w-full bg-white/5 rounded-lg p-2">
+                                <ResponsiveContainer width="100%" height="100%">
                                   <AreaChart data={favoriteDetails.chartData}>
                                     <defs>
                                       <linearGradient id="favPnlGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1139,7 +1139,7 @@ export default function App() {
                                     />
                                     <Area 
                                       type="monotone" 
-                                      dataKey="pnl" 
+                                      dataKey="realizedProfitUsd" 
                                       stroke="#10b981" 
                                       fill="url(#favPnlGradient)"
                                       strokeWidth={2}
