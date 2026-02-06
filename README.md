@@ -184,19 +184,31 @@ Add these in your Vercel project settings:
 
 ## Automated Scanning
 
-For production, set up a cron job to run scans automatically:
+For production, set up a cron job to run scans automatically.
 
-1. **Vercel Cron** (Pro plan) - Add to `vercel.json`:
-   ```json
-   {
-     "crons": [{
-       "path": "/api/scan",
-       "schedule": "*/10 * * * *"
-     }]
-   }
-   ```
+### Option 1: cron-job.org (Free)
 
-2. **External Cron** (Free) - Use [cron-job.org](https://cron-job.org) to POST to `/api/scan` every 10 minutes
+1. Add `SCAN_API_KEY` to your Vercel environment variables (generate a random string)
+2. Create account at [cron-job.org](https://cron-job.org)
+3. Create new cron job:
+   - **URL:** `https://your-domain.vercel.app/api/scan`
+   - **Method:** `POST`
+   - **Schedule:** Every 10-30 minutes
+   - **Headers:** Add `Authorization: Bearer YOUR_SCAN_API_KEY`
+   - **Timeout:** 60 seconds
+
+### Option 2: Vercel Cron (Pro plan)
+
+Add to `vercel.json`:
+```json
+{
+  "crons": [{
+    "path": "/api/scan",
+    "schedule": "*/10 * * * *"
+  }]
+}
+```
+Note: Vercel cron doesn't support custom headers, so leave `SCAN_API_KEY` unset or use a different auth method
 
 ## How It Works
 

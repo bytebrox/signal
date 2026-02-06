@@ -463,8 +463,22 @@ function generateTags(appearances: number, totalPnlUsd: number, totalPnlPercent:
   return tags
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    // API Key authentication for cron jobs
+    const authHeader = request.headers.get('authorization')
+    const apiKey = process.env.SCAN_API_KEY
+    
+    if (apiKey) {
+      // If API key is configured, require it
+      if (!authHeader || authHeader !== `Bearer ${apiKey}`) {
+        return NextResponse.json(
+          { success: false, error: 'Unauthorized - Invalid or missing API key' },
+          { status: 401 }
+        )
+      }
+    }
+    
     const supabase = getSupabase()
     const codex = getCodex()
     
