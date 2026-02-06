@@ -379,7 +379,7 @@ export default function App() {
     fetchWallets(timeRange, filterType, 1, searchQuery, activeTag, next)
   }
 
-  // Format "Last Trade" relative time
+  // Format "Last Scan" relative time (when our scanner last found this wallet)
   const formatLastSeen = (dateStr: string | null | undefined): string => {
     if (!dateStr) return '—'
     const now = Date.now()
@@ -397,7 +397,7 @@ export default function App() {
     return `${months}mo ago`
   }
 
-  // Check if a wallet is considered inactive (> 14 days)
+  // Check if a wallet is considered inactive (not found in scan for > 14 days)
   const isWalletInactive = (dateStr: string | null | undefined): boolean => {
     if (!dateStr) return true
     const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -407,7 +407,7 @@ export default function App() {
   // Export wallets as CSV
   const exportCSV = () => {
     if (wallets.length === 0) return
-    const headers = ['Address', 'Total PnL %', 'Avg PnL %', 'Trades', 'Tokens', 'Tags', 'Last Trade']
+    const headers = ['Address', 'Total PnL %', 'Avg PnL %', 'Trades', 'Tokens', 'Tags', 'Last Scan']
     const rows = wallets.map(w => [
       w.address,
       w.total_pnl || w.pnl_percent,
@@ -815,7 +815,7 @@ export default function App() {
                           ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
                           : 'border-border text-muted hover:border-white/20 hover:text-white'
                       }`}
-                      title="Hide wallets inactive for more than 14 days"
+                      title="Hide wallets not found in any scan for 14+ days"
                     >
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -885,7 +885,7 @@ export default function App() {
                         <th className="text-right px-3 sm:px-6 py-3 font-medium hidden sm:table-cell">Avg PnL</th>
                         <th className="text-right px-3 sm:px-6 py-3 font-medium hidden md:table-cell">Trades</th>
                         <th className="text-right px-3 sm:px-6 py-3 font-medium hidden md:table-cell">Tokens</th>
-                        <th className="text-right px-3 sm:px-6 py-3 font-medium hidden lg:table-cell">Last Trade</th>
+                        <th className="text-right px-3 sm:px-6 py-3 font-medium hidden lg:table-cell">Last Scan</th>
                         <th className="text-right px-3 sm:px-6 py-3 font-medium"></th>
                       </tr>
                     </thead>

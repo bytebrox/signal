@@ -592,22 +592,17 @@ export async function POST(request: Request) {
       trades: number
       tokens: number
       volumeUsd: number
-      lastTradeAt: number  // Real last trade timestamp from Codex API
     }>()
     
     for (const trader of newTraders) {
       const existing = walletUpdates.get(trader.walletAddress) || { 
-        pnlUsd: 0, pnlPercent: 0, trades: 0, tokens: 0, volumeUsd: 0, lastTradeAt: 0 
+        pnlUsd: 0, pnlPercent: 0, trades: 0, tokens: 0, volumeUsd: 0 
       }
       existing.pnlUsd += trader.realizedProfitUsd
       existing.pnlPercent += trader.realizedProfitPercent
       existing.trades += trader.buys + trader.sells
       existing.tokens += 1
       existing.volumeUsd += trader.volumeUsd
-      // Keep the most recent trade timestamp across all tokens
-      if (trader.lastTradeAt > existing.lastTradeAt) {
-        existing.lastTradeAt = trader.lastTradeAt
-      }
       walletUpdates.set(trader.walletAddress, existing)
     }
     
@@ -644,10 +639,8 @@ export async function POST(request: Request) {
           avg_return: Math.round(newTotalPnlPercent / newWinningTokens),
           win_rate: Math.min(95, 50 + newWinningTokens * 5),
           tags: generateTags(newAppearances, newTotalPnlUsd, newTotalPnlPercent, newTotalTrades),
-          // Use the most recent real trade timestamp: either the new one from Codex or the existing one
-          last_trade_at: newStats.lastTradeAt
-            ? new Date(Math.max(newStats.lastTradeAt * 1000, new Date(existing.last_trade_at || 0).getTime())).toISOString()
-            : existing.last_trade_at || new Date().toISOString(),
+          // last_trade_at = when our scanner last found this wallet in a trending token
+          last_trade_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
       } else {
@@ -663,10 +656,8 @@ export async function POST(request: Request) {
           avg_return: newStats.tokens > 0 ? Math.round(newStats.pnlPercent / newStats.tokens) : 0,
           win_rate: Math.min(95, 50 + newStats.tokens * 5),
           tags: generateTags(newStats.tokens, newStats.pnlUsd, newStats.pnlPercent, newStats.trades),
-          // Use real trade timestamp from Codex API
-          last_trade_at: newStats.lastTradeAt
-            ? new Date(newStats.lastTradeAt * 1000).toISOString()
-            : new Date().toISOString(),
+          // last_trade_at = when our scanner first discovered this wallet
+          last_trade_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }

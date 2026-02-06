@@ -7,17 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.9.3] - 2026-02-06
 
 ### Added
-- **"Last Trade" Column** — Dashboard table now shows when each wallet last traded (relative time: `3h ago`, `5d ago`, etc.)
-  - Inactive wallets (>14 days) highlighted in amber
+- **"Last Scan" Column** — Dashboard table shows when our scanner last found each wallet in a trending token (relative time: `3h ago`, `5d ago`, etc.)
+  - Wallets not seen in 14+ days highlighted in amber
   - Also shown in the Wallets tab on each favorite
-- **"Hide Inactive" Filter** — Toggle button in the filter bar to hide wallets with no trades in 14+ days
+- **"Hide Inactive" Filter** — Toggle button in the filter bar to hide wallets not found in any scan for 14+ days
   - Server-side filtering for correct pagination
   - Configurable threshold via `display.inactiveDays` in `lib/config.ts`
-
-### Fixed
-- **Real Trade Timestamps** — `last_trade_at` now stores the actual last trade time from the Codex API instead of the scanner discovery time
-  - Existing wallets get updated with real timestamps on the next scan
-  - For updated wallets, the most recent timestamp (DB vs. API) is kept
 
 ## [0.9.2] - 2026-02-06
 
