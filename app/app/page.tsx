@@ -89,6 +89,14 @@ export default function App() {
   const [totalWallets, setTotalWallets] = useState(0)
   const walletsPerPage = 20
   
+  // Global stats (for all wallets in DB, not just current page)
+  const [globalStats, setGlobalStats] = useState({
+    totalWallets: 0,
+    multiTokenWallets: 0,
+    topPnl: 0,
+    totalTrades: 0
+  })
+  
   // Favorites state
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [favoritesLoading, setFavoritesLoading] = useState<Set<string>>(new Set())
@@ -230,6 +238,9 @@ export default function App() {
       
       setWallets(data.wallets || [])
       setTotalWallets(data.total || 0)
+      if (data.globalStats) {
+        setGlobalStats(data.globalStats)
+      }
       setDbConfigured(true)
     } catch (error) {
       console.error('Fetch error:', error)
@@ -512,10 +523,10 @@ export default function App() {
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Tracked Wallets', value: wallets.length.toString(), change: 'unique addresses' },
-            { label: 'Multi-Token Wallets', value: wallets.filter(w => (w.appearances || w.winning_tokens) >= 2).length.toString(), change: '2+ tokens found' },
-            { label: 'Top Total PnL', value: wallets.length ? `+${Math.max(...wallets.map(w => w.total_pnl || w.pnl_percent))}%` : '-', change: 'best performer' },
-            { label: 'Total Trades', value: wallets.reduce((a, w) => a + w.total_trades, 0).toLocaleString(), change: 'across all' },
+            { label: 'Tracked Wallets', value: globalStats.totalWallets.toString(), change: 'unique addresses' },
+            { label: 'Multi-Token Wallets', value: globalStats.multiTokenWallets.toString(), change: '2+ tokens found' },
+            { label: 'Top Total PnL', value: globalStats.topPnl ? `+${globalStats.topPnl}%` : '-', change: 'best performer' },
+            { label: 'Total Trades', value: globalStats.totalTrades.toLocaleString(), change: 'across all' },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}

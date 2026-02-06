@@ -67,13 +67,27 @@ export async function GET(request: Request) {
       return NextResponse.json({ wallets: [], error: error.message }, { status: 500 })
     }
     
+    // Fetch aggregate stats for ALL wallets (not just current page)
+    const { data: allWallets } = await supabase
+      .from('tracked_wallets')
+      .select('total_pnl, pnl_percent, total_trades, appearances, winning_tokens')
+    
+    // Calculate global stats
+    const globalStats = {
+      totalWallets: allWallets?.length || 0,
+      multiTokenWallets: allWallets?.filter(w => (w.appearances || w.winning_tokens || 0) >= 2).length || 0,
+      topPnl: allWallets?.length ? Math.max(...allWallets.map(w => w.total_pnl || w.pnl_percent || 0)) : 0,
+      totalTrades: allWallets?.reduce((sum, w) => sum + (w.total_trades || 0), 0) || 0
+    }
+    
     return NextResponse.json({
       wallets: data || [],
       total: count || 0,
       limit,
       offset,
       timeRange,
-      filterType
+      filterType,
+      globalStats
     })
   } catch (error) {
     return NextResponse.json(
