@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface User {
   id: number
@@ -47,10 +48,18 @@ interface TokenHistory {
   discovered_at: string
 }
 
+interface ChartDataPoint {
+  date: string
+  realizedProfitUsd: number
+  swaps: number
+  volumeUsd: number
+}
+
 interface WalletDetails {
   wallet: TrackedWallet
   tokenHistory: TokenHistory[]
   totalTokens: number
+  chartData?: ChartDataPoint[]
 }
 
 export default function App() {
@@ -74,6 +83,11 @@ export default function App() {
   const [dbConfigured, setDbConfigured] = useState(true)
   const [timeRange, setTimeRange] = useState<'all' | '24h' | '7d' | '30d'>('all')
   const [filterType, setFilterType] = useState<'discovered' | 'activity'>('discovered')
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalWallets, setTotalWallets] = useState(0)
+  const walletsPerPage = 20
   
   // Favorites state
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
@@ -188,11 +202,15 @@ export default function App() {
     }
   }
 
-  // Fetch wallets from API
-  const fetchWallets = async (range?: string, filter?: string) => {
+  // Fetch wallets from API with pagination
+  const fetchWallets = async (range?: string, filter?: string, page?: number) => {
     try {
+      const pageNum = page || currentPage
+      const offset = (pageNum - 1) * walletsPerPage
+      
       const params = new URLSearchParams({
-        limit: '20',
+        limit: walletsPerPage.toString(),
+        offset: offset.toString(),
         range: range || timeRange,
         filterType: filter || filterType
       })
@@ -206,6 +224,7 @@ export default function App() {
       }
       
       setWallets(data.wallets || [])
+      setTotalWallets(data.total || 0)
       setDbConfigured(true)
     } catch (error) {
       console.error('Fetch error:', error)
@@ -226,13 +245,14 @@ export default function App() {
     }
   }
 
-  // Fetch wallet details
+  // Fetch wallet details with chart data
   const fetchWalletDetails = async (address: string) => {
     setLoadingDetails(true)
     setWalletDetails(null)
     
     try {
-      const res = await fetch(`/api/wallets/${address}`)
+      // Fetch with chart data (30 days)
+      const res = await fetch(`/api/wallets/${address}?chart=true&days=30`)
       const data = await res.json()
       
       if (!data.error) {
@@ -254,15 +274,24 @@ export default function App() {
   // Handle time range change
   const handleTimeRangeChange = (range: 'all' | '24h' | '7d' | '30d') => {
     setTimeRange(range)
+    setCurrentPage(1) // Reset to first page
     setLoading(true)
-    fetchWallets(range, filterType)
+    fetchWallets(range, filterType, 1)
   }
 
   // Handle filter type change
   const handleFilterTypeChange = (type: 'discovered' | 'activity') => {
     setFilterType(type)
+    setCurrentPage(1) // Reset to first page
     setLoading(true)
-    fetchWallets(timeRange, type)
+    fetchWallets(timeRange, type, 1)
+  }
+  
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    setLoading(true)
+    fetchWallets(timeRange, filterType, page)
   }
 
   // Trigger manual scan
@@ -276,8 +305,9 @@ export default function App() {
       setScanResult(data)
       
       if (data.success) {
-        // Refresh wallet list
-        await fetchWallets()
+        // Refresh wallet list and reset to first page
+        setCurrentPage(1)
+        await fetchWallets(timeRange, filterType, 1)
         await checkScanStatus()
       }
     } catch (error) {
@@ -671,6 +701,64 @@ export default function App() {
                       ))}
                     </tbody>
                   </table>
+                  
+                  {/* Pagination */}
+                  {totalWallets > walletsPerPage && (
+                    <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+                      <div className="text-sm text-muted">
+                        Showing {((currentPage - 1) * walletsPerPage) + 1}-{Math.min(currentPage * walletsPerPage, totalWallets)} of {totalWallets} wallets
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1.5 text-sm border border-border rounded-lg hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        
+                        {/* Page numbers */}
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, Math.ceil(totalWallets / walletsPerPage)) }, (_, i) => {
+                            const totalPages = Math.ceil(totalWallets / walletsPerPage)
+                            let pageNum: number
+                            
+                            if (totalPages <= 5) {
+                              pageNum = i + 1
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i
+                            } else {
+                              pageNum = currentPage - 2 + i
+                            }
+                            
+                            return (
+                              <button
+                                key={pageNum}
+                                onClick={() => handlePageChange(pageNum)}
+                                className={`w-8 h-8 text-sm rounded-lg transition-colors ${
+                                  currentPage === pageNum 
+                                    ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30' 
+                                    : 'border border-border hover:border-white/20'
+                                }`}
+                              >
+                                {pageNum}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage >= Math.ceil(totalWallets / walletsPerPage)}
+                          className="px-3 py-1.5 text-sm border border-border rounded-lg hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -712,6 +800,58 @@ export default function App() {
                       <div className="p-3 bg-white/5 rounded-lg">
                         <div className="text-xs text-muted">Tokens Found</div>
                         <div className="text-lg font-semibold">{walletDetails.totalTokens}</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* PnL Chart */}
+                  {walletDetails?.chartData && walletDetails.chartData.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium mb-3">30-Day PnL</h3>
+                      <div className="h-32 bg-white/5 rounded-lg p-2">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={100}>
+                          <AreaChart data={walletDetails.chartData}>
+                            <defs>
+                              <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <XAxis 
+                              dataKey="date" 
+                              tick={{ fontSize: 10, fill: '#666' }}
+                              tickFormatter={(value) => value.slice(5)} // Show MM-DD
+                              interval="preserveStartEnd"
+                            />
+                            <YAxis 
+                              tick={{ fontSize: 10, fill: '#666' }}
+                              tickFormatter={(value) => `$${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+                              width={45}
+                            />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: '#18181b', 
+                                border: '1px solid #27272a',
+                                borderRadius: '8px',
+                                fontSize: '12px'
+                              }}
+                              labelStyle={{ color: '#a1a1aa' }}
+                              formatter={(value) => [`$${Number(value || 0).toLocaleString()}`, 'Profit']}
+                              labelFormatter={(label) => `Date: ${label}`}
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="realizedProfitUsd" 
+                              stroke="#10b981" 
+                              fill="url(#pnlGradient)"
+                              strokeWidth={2}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex justify-between text-[10px] text-muted mt-1">
+                        <span>{walletDetails.chartData.reduce((sum, d) => sum + d.swaps, 0)} swaps</span>
+                        <span>${walletDetails.chartData.reduce((sum, d) => sum + d.volumeUsd, 0).toLocaleString()} volume</span>
                       </div>
                     </div>
                   )}

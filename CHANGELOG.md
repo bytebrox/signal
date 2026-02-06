@@ -4,6 +4,57 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.6.0] - 2026-02-05
+
+### Added
+- **Centralized Configuration** - All scanner settings in `lib/config.ts`
+  - Easy adjustment of all filters without touching core code
+  - Network settings, scanner limits, wallet filters, display options
+  - Tag thresholds for auto-labeling (Smart Money, Whale, etc.)
+- **Trending Token Discovery** - Uses Codex `trendingScore24` ranking
+  - Scans top 30 trending Solana tokens per run
+  - Filters: min $100k volume, $50k liquidity, $50k market cap
+  - FILTERED stats type removes MEV/bot activity
+- **Token-Based Wallet Discovery** - Two-step process
+  1. Fetch trending tokens via `filterTokens`
+  2. Get top traders per token via `filterTokenWallets`
+- **Aggressive Insider Filters** - Only high-quality wallets saved
+  - Minimum 500% profit (6x return)
+  - Minimum $500 realized profit
+  - Minimum $100 buy amount (filters out transfers)
+  - Maximum 7 days since last trade (active wallets only)
+  - Maximum $50k buy (filters out whales)
+- **30-Day PnL Chart** - Visual profit/loss chart in wallet details
+  - Uses Codex `walletChart` endpoint
+  - Area chart with gradient fill
+  - Custom tooltips showing date and PnL
+- **Pagination** - Proper page navigation for wallet list
+  - 20 wallets per page
+  - Previous/Next navigation
+  - Page number buttons (up to 5 visible)
+  - Shows "X-Y of Z wallets"
+
+### Changed
+- Scanner now uses `filterTokenWallets` instead of generic `filterWallets`
+- Wallet statistics aggregated across multiple tokens properly
+- API `/api/wallets` returns `total` count for pagination
+- Display limit increased - database collects all qualifying wallets
+
+### Fixed
+- Inactive wallets no longer appear (7-day activity filter)
+- Inflated profit percentages from token transfers filtered out
+- Recharts console warnings (added minWidth/minHeight)
+
+### Configuration
+New `lib/config.ts` structure:
+```typescript
+config.scanner.tokensToScan      // 30 tokens per scan
+config.scanner.tradersPerToken   // 25 traders per token
+config.tokenWalletFilters.minProfitPercent  // 500%
+config.tokenWalletFilters.maxDaysSinceLastTrade  // 7 days
+config.display.walletsPerPage    // 20 per page
+```
+
 ## [0.5.0] - 2026-02-05
 
 ### Added

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { Codex, TokenRankingAttribute, RankingDirection, TradingPeriod } from '@codex-data/sdk'
+import { Codex, TokenRankingAttribute, RankingDirection } from '@codex-data/sdk'
+import { config } from '@/lib/config'
 
 // Lazy initialization
 function getSupabase(): SupabaseClient | null {
@@ -12,7 +13,7 @@ function getSupabase(): SupabaseClient | null {
 
 // Codex SDK
 const CODEX_API_KEY = process.env.CODEX_API_KEY
-const SOLANA_NETWORK = 1399811149
+const SOLANA_NETWORK = config.solana.networkId
 
 function getCodex(): Codex | null {
   if (!CODEX_API_KEY) return null
@@ -41,40 +42,43 @@ interface TopTraderData {
   lastTradeAt: number
 }
 
-// Fetch trending tokens from Codex - multiple strategies for variety
-async function fetchTrendingTokens(limit: number = 30): Promise<TokenData[]> {
+// Fetch trending tokens from Codex using trendingScore24
+async function fetchTrendingTokens(limit: number = config.scanner.tokensToScan): Promise<TokenData[]> {
   const codex = getCodex()
   if (!codex) {
     console.error('Codex API key not configured')
     return []
   }
 
+  const { trendingTokens: tokenConfig } = config
+
   try {
-    console.log('Fetching tokens from Codex with multiple strategies...')
+    console.log('Fetching trending tokens from Codex with trendingScore24...')
     
     const allTokens: TokenData[] = []
     const seenAddresses = new Set<string>()
     
-    // Strategy 1: Top gainers (high price change) - find pumping tokens
+    // Primary Strategy: Use trendingScore24 for best trending tokens
     try {
-      const gainersResponse = await codex.queries.filterTokens({
+      const trendingResponse = await codex.queries.filterTokens({
         filters: {
           network: [SOLANA_NETWORK],
-          liquidity: { gte: 1000, lte: 500000 }, // Smaller tokens, not mega caps
-          volume24: { gte: 5000 },
-          change24: { gte: 0.1 }, // At least 10% up
+          liquidity: { gte: tokenConfig.minLiquidity },
+          volume24: { gte: tokenConfig.minVolume24h },
+          marketCap: { gte: 50000 }, // Min $50k market cap
         },
         rankings: [{ 
-          attribute: TokenRankingAttribute.Change24, 
+          attribute: TokenRankingAttribute.TrendingScore24, 
           direction: RankingDirection.Desc 
         }],
-        limit: 15,
+        statsType: 'FILTERED' as any, // Remove MEV, show organic volume
+        limit: Math.min(limit, 50),
       })
       
-      const gainers = gainersResponse?.filterTokens?.results || []
-      console.log(`Strategy 1 (Gainers): ${gainers.length} tokens`)
+      const trending = trendingResponse?.filterTokens?.results || []
+      console.log(`Trending tokens (trendingScore24): ${trending.length} tokens`)
       
-      for (const data of gainers) {
+      for (const data of trending) {
         if (!data) continue
         const token = (data as any).token || data
         const address = token?.address || ''
@@ -91,7 +95,48 @@ async function fetchTrendingTokens(limit: number = 30): Promise<TokenData[]> {
         }
       }
     } catch (e) {
-      console.error('Strategy 1 error:', e)
+      console.error('Trending strategy error:', e)
+    }
+    
+    // Fallback Strategy: Top gainers if trending didn't return enough
+    if (allTokens.length < limit / 2) {
+      try {
+        const gainersResponse = await codex.queries.filterTokens({
+          filters: {
+            network: [SOLANA_NETWORK],
+            liquidity: { gte: tokenConfig.minLiquidity / 2 },
+            volume24: { gte: tokenConfig.minVolume24h / 2 },
+            change24: { gte: 0.1 }, // At least 10% up
+          },
+          rankings: [{ 
+            attribute: TokenRankingAttribute.Change24, 
+            direction: RankingDirection.Desc 
+          }],
+          limit: 20,
+        })
+        
+        const gainers = gainersResponse?.filterTokens?.results || []
+        console.log(`Fallback (Gainers): ${gainers.length} tokens`)
+        
+        for (const data of gainers) {
+          if (!data) continue
+          const token = (data as any).token || data
+          const address = token?.address || ''
+          if (address && address.length > 30 && !seenAddresses.has(address)) {
+            seenAddresses.add(address)
+            allTokens.push({
+              address,
+              symbol: token?.symbol || '???',
+              name: token?.name || 'Unknown',
+              priceChange24: ((data as any).change24 || 0) * 100,
+              volume24: (data as any).volume24 || 0,
+              liquidity: (data as any).liquidity || 0,
+            })
+          }
+        }
+      } catch (e) {
+        console.error('Fallback strategy error:', e)
+      }
     }
     
     // Strategy 2: High volume with recent activity - active trading
@@ -184,66 +229,236 @@ async function fetchTrendingTokens(limit: number = 30): Promise<TokenData[]> {
   }
 }
 
-// Fetch top traders for a token using Codex tokenTopTraders
-async function fetchTopTraders(
+// Insider wallet data structure
+interface InsiderWallet {
+  walletAddress: string
+  pnlUsd1w: number
+  pnlPercent1w: number
+  winRate: number
+  swapCount1w: number
+  volumeUsd1w: number
+  uniqueTokens1w: number
+  avgSwapAmount: number
+  avgProfitPerTrade: number
+  scammerScore: number
+}
+
+// Fetch insider wallets using filterWallets endpoint
+async function fetchInsiderWallets(
   codex: Codex, 
-  tokenAddress: string, 
-  tokenSymbol: string,
-  limit: number = 20
-): Promise<TopTraderData[]> {
+  limit: number = config.scanner.tradersPerToken
+): Promise<InsiderWallet[]> {
+  const { walletFilters: wf } = config
+  
   try {
-    const response = await codex.queries.tokenTopTraders({
+    console.log('Fetching insider wallets with aggressive filters...')
+    console.log(`  Min Profit: ${wf.minProfitPercent1w}% / $${wf.minProfitUsd1w}`)
+    console.log(`  Min Win Rate: ${wf.minWinRate}%`)
+    console.log(`  Swap Range: ${wf.minSwaps1w}-${wf.maxSwaps1w}`)
+    
+    // Use filterWallets with correct structure: filters go inside 'filters' object
+    const response = await codex.queries.filterWallets({
       input: {
-        tokenAddress,
-        networkId: SOLANA_NETWORK,
-        tradingPeriod: TradingPeriod.Week, // Last 7 days
+        filters: {
+          // Network filter
+          networkId: SOLANA_NETWORK,
+          // Profitability filters (percentages as decimals, USD as numbers)
+          realizedProfitPercentage1w: { gte: wf.minProfitPercent1w / 100 },
+          realizedProfitUsd1w: { gte: wf.minProfitUsd1w },
+          winRate1w: { gte: wf.minWinRate / 100 },
+          // Activity filters
+          swaps1w: { gte: wf.minSwaps1w, lte: wf.maxSwaps1w },
+          uniqueTokens1w: { gte: wf.minUniqueTokens1w, lte: wf.maxUniqueTokens1w },
+          volumeUsd1w: { gte: wf.minVolumeUsd1w },
+          // Quality filters
+          scammerScore: { lte: wf.maxScammerScore },
+        },
         limit,
       }
     })
     
-    const items = response?.tokenTopTraders?.items || []
-    const traders: TopTraderData[] = []
+    const wallets = (response?.filterWallets?.results || []) as any[]
+    console.log(`Found ${wallets.length} potential insider wallets`)
     
-    for (const trader of items) {
-      if (!trader || !trader.walletAddress) continue
+    const insiders: InsiderWallet[] = []
+    
+    for (const wallet of wallets) {
+      if (!wallet || !wallet.address) continue
       
-      // Only include profitable traders
-      const profitUsd = parseFloat(trader.realizedProfitUsd || '0')
-      const profitPercent = trader.realizedProfitPercentage || 0
+      // Extract values - SDK returns strings for USD amounts
+      const pnlUsd = parseFloat(wallet.realizedProfitUsd1w || '0')
+      const pnlPercent = (wallet.realizedProfitPercentage1w || 0) * 100
+      const volume = parseFloat(wallet.volumeUsd1w || '0')
+      const swaps = wallet.swaps1w || 0
+      const avgSwap = swaps > 0 ? volume / swaps : 0
       
-      if (profitUsd > 0 && profitPercent > 5) { // At least 5% profit
-        traders.push({
-          walletAddress: trader.walletAddress,
-          tokenAddress: trader.tokenAddress,
-          tokenSymbol,
-          realizedProfitUsd: profitUsd,
-          realizedProfitPercent: profitPercent,
-          volumeUsd: parseFloat(trader.volumeUsd || '0'),
-          buys: trader.buys || 0,
-          sells: trader.sells || 0,
-          tokenBalance: trader.tokenBalance || '0',
-          lastTradeAt: trader.lastTransactionAt || Date.now() / 1000
-        })
-      }
+      // Additional filter: avg profit per trade
+      const avgProfit = swaps > 0 ? pnlUsd / swaps : 0
+      if (avgProfit < wf.minAvgProfitPerTrade) continue
+      
+      // Additional filter: avg swap size
+      if (avgSwap < wf.minAvgSwapAmount) continue
+      
+      insiders.push({
+        walletAddress: wallet.address,
+        pnlUsd1w: pnlUsd,
+        pnlPercent1w: pnlPercent,
+        winRate: (wallet.winRate1w || 0) * 100,
+        swapCount1w: swaps,
+        volumeUsd1w: volume,
+        uniqueTokens1w: wallet.uniqueTokens1w || 0,
+        avgSwapAmount: avgSwap,
+        avgProfitPerTrade: avgProfit,
+        scammerScore: wallet.scammerScore || 0,
+      })
     }
     
-    return traders
-  } catch (error) {
-    console.error(`Error fetching top traders for ${tokenSymbol}:`, error)
+    console.log(`After additional filters: ${insiders.length} insider wallets`)
+    return insiders
+    
+  } catch (error: any) {
+    // Check if this is a premium feature error
+    if (error?.message?.includes('upgrade') || error?.message?.includes('authorized')) {
+      console.error('filterWallets requires premium plan. Falling back to token-based approach...')
+      return []
+    }
+    console.error('Error fetching insider wallets:', error)
     return []
   }
 }
 
-// Generate tags based on stats
+// Fetch top traders for a specific token using filterTokenWallets
+async function fetchTokenTraders(
+  codex: Codex, 
+  tokenAddress: string, 
+  tokenSymbol: string,
+  limit: number = config.scanner.tradersPerToken
+): Promise<TopTraderData[]> {
+  const { tokenWalletFilters: tf } = config
+  
+  // Calculate cutoff timestamp for last trade filter
+  const maxAgeDays = tf.maxDaysSinceLastTrade || 7
+  const cutoffTimestamp = Math.floor(Date.now() / 1000) - (maxAgeDays * 24 * 60 * 60)
+  
+  try {
+    // Token ID format is "tokenAddress:networkId"
+    const tokenId = `${tokenAddress}:${SOLANA_NETWORK}`
+    
+    // Use filterTokenWallets with correct structure
+    const response = await codex.queries.filterTokenWallets({
+      input: {
+        tokenId,
+        networkId: SOLANA_NETWORK,
+        filtersV2: {
+          buys30d: { gte: tf.minBuys30d },
+          sells30d: { gte: tf.minSells30d },
+          realizedProfitUsd30d: { gte: tf.minRealizedProfitUsd },
+          amountBoughtUsd30d: { gte: tf.minBuyAmountUsd, lte: tf.maxBuyAmountUsd },
+          // Filter for recent activity
+          lastTransactionAt: { gte: cutoffTimestamp },
+        },
+        limit,
+      }
+    })
+    
+    const wallets = (response?.filterTokenWallets?.results || []) as any[]
+    const traders: TopTraderData[] = []
+    
+    for (const wallet of wallets) {
+      if (!wallet || !wallet.address) continue
+      
+      // Double-check last trade time (in case API filter didn't work)
+      const lastTradeAt = wallet.lastTransactionAt || 0
+      if (lastTradeAt < cutoffTimestamp) {
+        console.log(`  Skipping ${wallet.address.slice(0, 8)}... - last trade too old`)
+        continue
+      }
+      
+      const profitUsd = parseFloat(wallet.realizedProfitUsd30d || '0')
+      const buyAmount = parseFloat(wallet.amountBoughtUsd30d || '0')
+      
+      // Skip wallets with no real buy amount (likely received tokens via transfer)
+      if (buyAmount < tf.minBuyAmountUsd) {
+        console.log(`  Skipping ${wallet.address.slice(0, 8)}... - buy amount too low ($${buyAmount.toFixed(0)})`)
+        continue
+      }
+      
+      const profitPercent = (profitUsd / buyAmount) * 100
+      
+      // Skip wallets with profit % below minimum threshold
+      if (profitPercent < (tf.minProfitPercent || 0)) {
+        console.log(`  Skipping ${wallet.address.slice(0, 8)}... - profit too low (${profitPercent.toFixed(0)}%)`)
+        continue
+      }
+      
+      traders.push({
+        walletAddress: wallet.address,
+        tokenAddress,
+        tokenSymbol,
+        realizedProfitUsd: profitUsd,
+        realizedProfitPercent: profitPercent,
+        volumeUsd: parseFloat(wallet.amountBoughtUsd30d || '0') + parseFloat(wallet.amountSoldUsd30d || '0'),
+        buys: wallet.buys30d || 0,
+        sells: wallet.sells30d || 0,
+        tokenBalance: wallet.tokenBalance || '0',
+        lastTradeAt: lastTradeAt
+      })
+    }
+    
+    return traders
+  } catch (error: any) {
+    // Check if this is a premium feature error
+    if (error?.message?.includes('upgrade') || error?.message?.includes('authorized')) {
+      console.error(`filterTokenWallets requires premium plan for ${tokenSymbol}`)
+      return []
+    }
+    console.error(`Error fetching traders for ${tokenSymbol}:`, error)
+    return []
+  }
+}
+
+// Generate tags based on stats using config thresholds
 function generateTags(appearances: number, totalPnlUsd: number, totalPnlPercent: number, totalTrades: number): string[] {
+  const { tags: tagConfig } = config
   const tags: string[] = []
-  if (appearances >= 5) tags.push('Consistent')
-  if (appearances >= 3) tags.push('Multi-Winner')
-  if (totalPnlUsd > 10000) tags.push('Whale')
-  else if (totalPnlUsd > 1000) tags.push('High PnL')
-  if (totalPnlPercent > 500) tags.push('10x Hunter')
-  if (totalTrades > 30) tags.push('Active')
-  if (appearances >= 2 && totalPnlUsd > 500) tags.push('Smart Money')
+  
+  // Consistent trader
+  if (appearances >= tagConfig.consistent.minAppearances) {
+    tags.push('Consistent')
+  }
+  if (appearances >= 3) {
+    tags.push('Multi-Winner')
+  }
+  
+  // Whale
+  if (totalPnlUsd > tagConfig.whale.minVolumeUsd) {
+    tags.push('Whale')
+  } else if (totalPnlUsd > 10000) {
+    tags.push('High PnL')
+  }
+  
+  // Smart Money
+  if (totalPnlPercent > tagConfig.smartMoney.minProfitPercent && 
+      totalTrades >= tagConfig.smartMoney.minTrades) {
+    tags.push('Smart Money')
+  }
+  
+  // 10x Hunter (for really high profit percentages)
+  if (totalPnlPercent > 1000) {
+    tags.push('10x Hunter')
+  }
+  
+  // Active trader
+  if (totalTrades > 30) {
+    tags.push('Active')
+  }
+  
+  // Insider tag for exceptional performance
+  if (totalPnlPercent > config.walletFilters.minProfitPercent1w && 
+      totalPnlUsd > config.walletFilters.minProfitUsd1w) {
+    tags.push('Insider')
+  }
+  
   if (tags.length === 0) tags.push('Tracked')
   return tags
 }
@@ -261,41 +476,43 @@ export async function POST() {
       return NextResponse.json({ success: false, error: 'Codex API key not configured' }, { status: 500 })
     }
     
-    console.log('Starting wallet scan with Codex tokenTopTraders...')
+    console.log('Starting insider wallet scan...')
+    console.log('Token filters:', JSON.stringify(config.trendingTokens, null, 2))
+    console.log('Wallet filters:', JSON.stringify(config.tokenWalletFilters, null, 2))
     
-    // Step 1: Get trending tokens from Codex
-    const tokens = await fetchTrendingTokens(20)
+    // Step 1: Get trending tokens from Codex using trendingScore24
+    const tokens = await fetchTrendingTokens()
     console.log(`Found ${tokens.length} trending tokens from Codex`)
     
     if (tokens.length === 0) {
       return NextResponse.json({ 
         success: true, 
-        message: 'No tokens found from Codex',
+        message: 'No trending tokens found',
         walletsUpdated: 0 
       })
     }
     
-    // Step 2: Get top traders for each token using Codex tokenTopTraders
+    // Step 2: Get top traders for each token using filterTokenWallets
     const allTraders: TopTraderData[] = []
     
     for (const token of tokens) {
-      console.log(`Fetching top traders for ${token.symbol} (${token.address.slice(0, 8)}...)`)
+      console.log(`Fetching traders for ${token.symbol} (${token.address.slice(0, 8)}...)`)
       
-      const traders = await fetchTopTraders(codex, token.address, token.symbol, 15)
+      const traders = await fetchTokenTraders(codex, token.address, token.symbol, config.scanner.tradersPerToken)
       allTraders.push(...traders)
       
       console.log(`  Found ${traders.length} profitable traders`)
       
-      // Small delay to avoid rate limits
-      await new Promise(r => setTimeout(r, 200))
+      // Delay to avoid rate limits
+      await new Promise(r => setTimeout(r, config.scanner.apiDelayMs))
     }
     
-    console.log(`Found ${allTraders.length} profitable traders total`)
+    console.log(`Found ${allTraders.length} profitable traders total from ${tokens.length} tokens`)
     
     if (allTraders.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'No profitable traders found',
+        message: 'No profitable traders found in trending tokens',
         tokensScanned: tokens.length,
         walletsUpdated: 0
       })
@@ -324,6 +541,7 @@ export async function POST() {
         success: true,
         message: 'No new wallet+token combinations found',
         tokensScanned: tokens.length,
+        tradersFound: allTraders.length,
         newFindings: 0,
         walletsUpdated: 0
       })
@@ -438,10 +656,16 @@ export async function POST() {
     
     return NextResponse.json({
       success: true,
-      message: 'Scan completed with Codex tokenTopTraders (real PnL data)',
+      message: 'Scan completed successfully',
       tokensScanned: tokens.length,
+      tradersFound: allTraders.length,
       newFindings: newTraders.length,
       walletsUpdated: upsertData.length,
+      configUsed: {
+        minRealizedProfit: config.tokenWalletFilters.minRealizedProfitUsd,
+        minLiquidity: config.trendingTokens.minLiquidity,
+        minVolume: config.trendingTokens.minVolume24h,
+      },
       timestamp: new Date().toISOString()
     })
     

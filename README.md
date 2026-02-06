@@ -17,14 +17,18 @@ SIGNAL automatically scans trending Solana tokens, analyzes on-chain transaction
 ### Features
 
 - **Wallet Authentication** - Connect with Phantom or other Solana wallets to access the app
-- **Automated Wallet Discovery** - Scans top volume tokens via Codex API and extracts profitable traders
+- **Insider Wallet Discovery** - Scans trending tokens and finds wallets with 500%+ profit
+- **Aggressive Filtering** - Only active, high-performing wallets (no bots, no inactive, no transfers)
 - **Favorites System** - Save wallets to your personal watchlist, synced across devices
-- **On-Chain Analysis** - Uses Codex tokenTopTraders API for real PnL data
+- **On-Chain Analysis** - Uses Codex API for real PnL data and wallet charts
+- **30-Day PnL Charts** - Visual profit/loss history for each wallet
 - **Historical Tracking** - Records wallet performance across multiple tokens over time
 - **Aggregated Statistics** - Total PnL, appearances, trade counts, and win rates
 - **Token History** - See exactly which tokens each wallet was found trading
 - **Time-Based Filtering** - Filter by discovery date or last activity (24h, 7d, 30d)
-- **Modern UI** - Clean, dark-themed dashboard with animated backgrounds and subtle gradients
+- **Pagination** - Browse through collected wallets (20 per page)
+- **Centralized Config** - Easy adjustment of all filters in `lib/config.ts`
+- **Modern UI** - Clean, dark-themed dashboard with animated backgrounds
 - **Open Source** - Fully transparent, check the code and contribute
 
 ## Tech Stack
@@ -33,10 +37,11 @@ SIGNAL automatically scans trending Solana tokens, analyzes on-chain transaction
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
+- **Charts**: Recharts
 - **Database**: Supabase (PostgreSQL)
 - **APIs**:
-  - [Codex](https://codex.io) - Trending token data
-  - [Helius](https://helius.dev) - Solana RPC & Enhanced Transactions
+  - [Codex](https://codex.io) - Token discovery, wallet analysis, PnL charts
+  - [Helius](https://helius.dev) - Solana RPC (optional)
 
 ## Getting Started
 
@@ -154,6 +159,11 @@ Records each wallet+token discovery:
 - `range` - Time filter: `all`, `24h`, `7d`, `30d`
 - `filterType` - `discovered` or `activity`
 
+### Query Parameters for `/api/wallets/[address]`
+
+- `chart` - Include 30-day PnL chart data (true/false)
+- `days` - Number of days for chart (default: 30)
+
 ## Deployment
 
 ### Vercel (Recommended)
@@ -190,12 +200,50 @@ For production, set up a cron job to run scans automatically:
 
 ## How It Works
 
-1. **Token Discovery**: Fetches top 30 Solana tokens by 24h volume from Codex
-2. **Transaction Analysis**: Gets recent transactions for each token via Helius
-3. **Trader Extraction**: Parses swaps and transfers to identify active wallets
+1. **Token Discovery**: Fetches top 30 trending Solana tokens by `trendingScore24` from Codex
+2. **Trader Analysis**: For each token, fetches top 25 traders via `filterTokenWallets`
+3. **Aggressive Filtering**: 
+   - Minimum 500% profit (6x return)
+   - Minimum $500 realized profit
+   - Active in last 7 days
+   - Real buys (not transfers) - minimum $100 invested
 4. **Deduplication**: Checks if wallet+token combination already exists
-5. **Aggregation**: Updates wallet statistics (only counting new findings)
-6. **Storage**: Persists to Supabase for historical tracking
+5. **Aggregation**: Updates wallet statistics across all discovered tokens
+6. **Storage**: Persists to Supabase - database grows with each scan
+
+### Scan Configuration
+
+All settings are centralized in `lib/config.ts`:
+
+```typescript
+// Tokens to scan per run
+config.scanner.tokensToScan = 30
+
+// Traders to fetch per token
+config.scanner.tradersPerToken = 25
+
+// Minimum profit percentage (500 = 6x return)
+config.tokenWalletFilters.minProfitPercent = 500
+
+// Maximum days since last trade
+config.tokenWalletFilters.maxDaysSinceLastTrade = 7
+```
+
+## Configuration Reference
+
+All scanner settings are in `lib/config.ts`:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `scanner.tokensToScan` | 30 | Trending tokens per scan |
+| `scanner.tradersPerToken` | 25 | Top traders fetched per token |
+| `tokenWalletFilters.minProfitPercent` | 500 | Minimum 500% profit (6x) |
+| `tokenWalletFilters.minRealizedProfitUsd` | 500 | Minimum $500 profit |
+| `tokenWalletFilters.minBuyAmountUsd` | 100 | Minimum $100 invested |
+| `tokenWalletFilters.maxDaysSinceLastTrade` | 7 | Active in last 7 days |
+| `trendingTokens.minVolume24h` | 100000 | Min $100k 24h volume |
+| `trendingTokens.minLiquidity` | 50000 | Min $50k liquidity |
+| `display.walletsPerPage` | 20 | Wallets per page |
 
 ## Links
 
