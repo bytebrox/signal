@@ -145,6 +145,54 @@ export async function POST(request: Request) {
   }
 }
 
+// PATCH - Update nickname/notes
+export async function PATCH(request: Request) {
+  try {
+    const supabase = getSupabase()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
+    const body = await request.json()
+    const { userWallet, walletAddress, nickname, notes } = body
+
+    if (!userWallet || !walletAddress) {
+      return NextResponse.json({ error: 'User wallet and wallet address are required' }, { status: 400 })
+    }
+
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('wallet_address', userWallet)
+      .single()
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const updates: Record<string, string | null> = {}
+    if (nickname !== undefined) updates.nickname = nickname || null
+    if (notes !== undefined) updates.notes = notes || null
+
+    const { error } = await supabase
+      .from('user_favorites')
+      .update(updates)
+      .eq('user_id', user.id)
+      .eq('wallet_address', walletAddress)
+
+    if (error) {
+      console.error('Error updating favorite:', error)
+      return NextResponse.json({ error: 'Failed to update favorite' }, { status: 500 })
+    }
+
+    return NextResponse.json({ message: 'Favorite updated' })
+
+  } catch (error) {
+    console.error('Favorites API error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 // DELETE - Remove a favorite
 export async function DELETE(request: Request) {
   try {

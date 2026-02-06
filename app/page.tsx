@@ -102,6 +102,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-12 text-sm text-white/50">
             <a href="#features" className="hover:text-white transition-colors duration-300">Features</a>
             <a href="#how" className="hover:text-white transition-colors duration-300">How it works</a>
+            <Link href="/docs" className="hover:text-white transition-colors duration-300">Docs</Link>
             <a href="https://github.com/bytebrox/signal" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors duration-300">GitHub</a>
           </div>
           

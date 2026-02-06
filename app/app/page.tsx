@@ -89,6 +89,10 @@ export default function App() {
   const [totalWallets, setTotalWallets] = useState(0)
   const walletsPerPage = 20
   
+  // Search & filter state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeTag, setActiveTag] = useState('')
+  
   // Global stats (for all wallets in DB, not just current page)
   const [globalStats, setGlobalStats] = useState({
     totalWallets: 0,
@@ -106,6 +110,11 @@ export default function App() {
   const [selectedFavorite, setSelectedFavorite] = useState<string | null>(null)
   const [favoriteDetails, setFavoriteDetails] = useState<WalletDetails | null>(null)
   const [loadingFavoriteDetails, setLoadingFavoriteDetails] = useState(false)
+  
+  // Nickname editing
+  const [editingNickname, setEditingNickname] = useState<string | null>(null)
+  const [nicknameInput, setNicknameInput] = useState('')
+  const [notesInput, setNotesInput] = useState('')
   
   // Navigation state
   const [activeTab, setActiveTab] = useState<'dashboard' | 'wallets' | 'settings'>('dashboard')
@@ -216,7 +225,7 @@ export default function App() {
   }
 
   // Fetch wallets from API with pagination
-  const fetchWallets = async (range?: string, filter?: string, page?: number) => {
+  const fetchWallets = async (range?: string, filter?: string, page?: number, query?: string, tag?: string) => {
     try {
       const pageNum = page || currentPage
       const offset = (pageNum - 1) * walletsPerPage
@@ -227,6 +236,12 @@ export default function App() {
         range: range || timeRange,
         filterType: filter || filterType
       })
+      
+      const searchVal = query !== undefined ? query : searchQuery
+      const tagVal = tag !== undefined ? tag : activeTag
+      if (searchVal) params.set('search', searchVal)
+      if (tagVal) params.set('tag', tagVal)
+      
       const res = await fetch(`/api/wallets?${params}`)
       const data = await res.json()
       
@@ -326,7 +341,80 @@ export default function App() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     setLoading(true)
-    fetchWallets(timeRange, filterType, page)
+    fetchWallets(timeRange, filterType, page, searchQuery, activeTag)
+  }
+  
+  // Handle search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(1)
+    setLoading(true)
+    fetchWallets(timeRange, filterType, 1, query, activeTag)
+  }
+  
+  // Handle tag filter
+  const handleTagFilter = (tag: string) => {
+    const newTag = activeTag === tag ? '' : tag
+    setActiveTag(newTag)
+    setCurrentPage(1)
+    setLoading(true)
+    fetchWallets(timeRange, filterType, 1, searchQuery, newTag)
+  }
+  
+  // Export wallets as CSV
+  const exportCSV = () => {
+    if (wallets.length === 0) return
+    const headers = ['Address', 'Total PnL %', 'Avg PnL %', 'Trades', 'Tokens', 'Tags', 'Last Trade']
+    const rows = wallets.map(w => [
+      w.address,
+      w.total_pnl || w.pnl_percent,
+      w.pnl_percent,
+      w.total_trades,
+      w.appearances || w.winning_tokens,
+      (w.tags || []).join('; '),
+      w.last_trade_at || ''
+    ])
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `signal-wallets-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+  
+  // Start editing nickname
+  const startEditNickname = (walletAddress: string, currentNickname: string | null, currentNotes?: string | null) => {
+    setEditingNickname(walletAddress)
+    setNicknameInput(currentNickname || '')
+    setNotesInput(currentNotes || '')
+  }
+  
+  // Save nickname
+  const saveNickname = async (walletAddress: string) => {
+    if (!publicKey) return
+    try {
+      await fetch('/api/favorites', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userWallet: publicKey.toBase58(),
+          walletAddress,
+          nickname: nicknameInput,
+          notes: notesInput
+        })
+      })
+      // Update local state
+      setFavoriteWallets(prev => prev.map(f => 
+        f.wallet_address === walletAddress 
+          ? { ...f, nickname: nicknameInput || null }
+          : f
+      ))
+      setEditingNickname(null)
+    } catch (error) {
+      console.error('Failed to save nickname:', error)
+    }
   }
 
   // Trigger manual scan
@@ -559,9 +647,22 @@ export default function App() {
                 background: `radial-gradient(ellipse at top left, rgba(16,185,129,0.06) 0%, transparent 40%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
               }}
             >
-              <div className="px-6 py-4 border-b border-border">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-semibold">Top Performing Wallets</h2>
+              <div className="px-6 py-4 border-b border-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-semibold">Top Performing Wallets</h2>
+                    <button
+                      onClick={exportCSV}
+                      disabled={wallets.length === 0}
+                      className="px-3 py-1 text-[11px] border border-border rounded-lg hover:border-white/30 text-muted hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5"
+                      title="Export as CSV"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      CSV
+                    </button>
+                  </div>
                   <div className="flex items-center gap-2">
                     {(['all', '24h', '7d', '30d'] as const).map((range) => (
                       <button
@@ -578,8 +679,48 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+                
+                {/* Search & Filters */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search wallet address..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 bg-white/5 border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => handleSearch('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-white transition-colors"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {['Smart Money', 'Whale', 'Insider', '10x Hunter', 'Active'].map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => handleTagFilter(tag)}
+                        className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                          activeTag === tag
+                            ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                            : 'border-border text-muted hover:border-white/20 hover:text-white'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
                 <div className="flex items-center gap-4 text-xs">
-                  <span className="text-muted">Filter by:</span>
+                  <span className="text-muted">Sort by:</span>
                   <button
                     onClick={() => handleFilterTypeChange('discovered')}
                     className={`px-2 py-1 rounded transition-colors ${
@@ -604,9 +745,24 @@ export default function App() {
               </div>
               
               {loading ? (
-                <div className="p-12 text-center text-muted">
-                  <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
-                  Loading wallets...
+                <div className="divide-y divide-border">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="px-6 py-4 flex items-center justify-between animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white/5" />
+                        <div className="space-y-2">
+                          <div className="h-4 w-28 bg-white/5 rounded" />
+                          <div className="h-3 w-16 bg-white/5 rounded" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="h-4 w-16 bg-white/5 rounded" />
+                        <div className="h-4 w-12 bg-white/5 rounded" />
+                        <div className="h-4 w-10 bg-white/5 rounded" />
+                        <div className="h-7 w-16 bg-white/5 rounded-lg" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : wallets.length === 0 ? (
                 <div className="p-12 text-center text-muted">
@@ -849,8 +1005,13 @@ export default function App() {
                     <h3 className="text-sm font-medium mb-3">Token History</h3>
                     
                     {loadingDetails ? (
-                      <div className="py-4 text-center">
-                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto" />
+                      <div className="space-y-2 animate-pulse">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <div key={i} className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
+                            <div className="h-4 w-20 bg-white/5 rounded" />
+                            <div className="h-4 w-14 bg-white/5 rounded" />
+                          </div>
+                        ))}
                       </div>
                     ) : walletDetails?.tokenHistory.length === 0 ? (
                       <div className="text-xs text-muted py-3 px-3 bg-white/5 rounded-lg">
@@ -926,8 +1087,10 @@ export default function App() {
             >
               <h2 className="font-semibold mb-3">How it works</h2>
               <p className="text-sm text-muted leading-relaxed">
-                SIGNAL scans trending Solana tokens by volume, analyzes on-chain transactions, 
-                and tracks wallets that consistently appear in profitable trades across multiple tokens.
+                SIGNAL automatically discovers trending Solana tokens and extracts the most profitable 
+                traders behind them. Wallets are filtered by realized profit, trade activity, and buy 
+                behavior — only the best make it into the database. Use search, tags, and time filters 
+                to find the wallets that match your strategy.
               </p>
             </div>
           </div>
@@ -981,48 +1144,101 @@ export default function App() {
                     </div>
                     <div className="divide-y divide-border">
                       {favoriteWallets.map((fav) => (
-                        <div 
-                          key={fav.wallet_address} 
-                          onClick={() => {
-                            setSelectedFavorite(fav.wallet_address)
-                            fetchFavoriteDetails(fav.wallet_address)
-                          }}
-                          className={`p-4 hover:bg-white/[0.02] transition-colors cursor-pointer ${
-                            selectedFavorite === fav.wallet_address ? 'bg-emerald-500/5 border-l-2 border-l-emerald-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center text-sm font-mono text-emerald-400">
-                                {fav.wallet_address.slice(0, 2)}
-                              </div>
-                              <div>
-                                <div className="font-mono text-sm">
-                                  {fav.wallet_address.slice(0, 6)}...{fav.wallet_address.slice(-6)}
+                        <div key={fav.wallet_address}>
+                          <div 
+                            onClick={() => {
+                              if (editingNickname !== fav.wallet_address) {
+                                setSelectedFavorite(fav.wallet_address)
+                                fetchFavoriteDetails(fav.wallet_address)
+                              }
+                            }}
+                            className={`p-4 hover:bg-white/[0.02] transition-colors cursor-pointer ${
+                              selectedFavorite === fav.wallet_address ? 'bg-emerald-500/5 border-l-2 border-l-emerald-500' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center text-sm font-mono text-emerald-400">
+                                  {fav.wallet_address.slice(0, 2)}
                                 </div>
-                                {fav.nickname && (
-                                  <div className="text-xs text-muted">{fav.nickname}</div>
+                                <div>
+                                  {fav.nickname ? (
+                                    <div className="font-medium text-sm">{fav.nickname}</div>
+                                  ) : null}
+                                  <div className={`font-mono text-sm ${fav.nickname ? 'text-muted text-xs' : ''}`}>
+                                    {fav.wallet_address.slice(0, 6)}...{fav.wallet_address.slice(-6)}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                {fav.walletData && (
+                                  <div className="text-right">
+                                    <div className="text-emerald-500 font-semibold">+{fav.walletData.total_pnl || fav.walletData.pnl_percent}%</div>
+                                    <div className="text-xs text-muted">{fav.walletData.total_trades} trades</div>
+                                  </div>
                                 )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    startEditNickname(fav.wallet_address, fav.nickname)
+                                  }}
+                                  className="px-2 py-1.5 text-xs border border-border rounded-lg hover:border-white/30 transition-colors text-muted hover:text-white"
+                                  title="Edit nickname"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleFavorite(fav.wallet_address)
+                                  }}
+                                  className="px-2 py-1.5 text-xs bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
+                                  title="Remove"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              {fav.walletData && (
-                                <div className="text-right">
-                                  <div className="text-emerald-500 font-semibold">+{fav.walletData.total_pnl || fav.walletData.pnl_percent}%</div>
-                                  <div className="text-xs text-muted">{fav.walletData.total_trades} trades</div>
-                                </div>
-                              )}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  toggleFavorite(fav.wallet_address)
-                                }}
-                                className="px-3 py-1.5 text-xs bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
-                              >
-                                Remove
-                              </button>
                             </div>
                           </div>
+                          
+                          {/* Inline Nickname Editor */}
+                          {editingNickname === fav.wallet_address && (
+                            <div className="px-4 pb-4 space-y-2 border-t border-border/50 pt-3 bg-white/[0.02]">
+                              <div>
+                                <label className="text-xs text-muted block mb-1">Nickname</label>
+                                <input
+                                  type="text"
+                                  value={nicknameInput}
+                                  onChange={(e) => setNicknameInput(e.target.value)}
+                                  placeholder="e.g. Smart Degen, Alpha Wallet..."
+                                  className="w-full px-3 py-2 bg-white/5 border border-border rounded-lg text-sm placeholder:text-muted/50 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') saveNickname(fav.wallet_address)
+                                    if (e.key === 'Escape') setEditingNickname(null)
+                                  }}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => saveNickname(fav.wallet_address)}
+                                  className="px-4 py-1.5 text-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingNickname(null)}
+                                  className="px-4 py-1.5 text-xs border border-border rounded-lg hover:border-white/30 text-muted hover:text-white transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1052,9 +1268,25 @@ export default function App() {
                       </div>
                       
                       {loadingFavoriteDetails ? (
-                        <div className="p-8 text-center">
-                          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
-                          <p className="text-sm text-muted">Loading details...</p>
+                        <div className="p-4 space-y-4 animate-pulse">
+                          <div className="p-3 bg-white/5 rounded-lg">
+                            <div className="h-3 w-12 bg-white/5 rounded mb-2" />
+                            <div className="h-4 w-full bg-white/5 rounded" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                              <div key={i} className="p-3 bg-white/5 rounded-lg">
+                                <div className="h-3 w-12 bg-white/5 rounded mb-2" />
+                                <div className="h-5 w-16 bg-white/5 rounded" />
+                              </div>
+                            ))}
+                          </div>
+                          <div className="h-40 bg-white/5 rounded-lg" />
+                          <div className="space-y-2">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                              <div key={i} className="h-8 bg-white/5 rounded-lg" />
+                            ))}
+                          </div>
                         </div>
                       ) : favoriteDetails ? (
                         <div className="p-4 space-y-4">

@@ -30,6 +30,8 @@ export async function GET(request: Request) {
     const sortBy = searchParams.get('sort') || 'total_pnl'
     const timeRange = searchParams.get('range') || 'all' // 24h, 7d, 30d, all
     const filterType = searchParams.get('filterType') || 'discovered' // discovered, activity
+    const search = searchParams.get('search') || ''
+    const tag = searchParams.get('tag') || ''
     
     // Calculate date threshold
     let dateThreshold: Date | null = null
@@ -56,6 +58,16 @@ export async function GET(request: Request) {
     if (dateThreshold) {
       const dateColumn = filterType === 'activity' ? 'last_trade_at' : 'created_at'
       query = query.gte(dateColumn, dateThreshold.toISOString())
+    }
+    
+    // Apply search filter (by address)
+    if (search) {
+      query = query.ilike('address', `%${search}%`)
+    }
+    
+    // Apply tag filter
+    if (tag) {
+      query = query.contains('tags', [tag])
     }
     
     // Apply sorting and pagination

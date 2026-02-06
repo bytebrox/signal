@@ -4,6 +4,43 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.0] - 2026-02-06
+
+### Added
+- **Wallet Search** - Search wallets by address directly in the dashboard
+  - Real-time search input with clear button
+  - Backend `search` parameter (ilike) on `/api/wallets`
+- **Tag Filters** - Filter dashboard wallets by tag (Smart Money, Whale, Insider, 10x Hunter, Active)
+  - Toggle buttons, combinable with search and time filters
+  - Backend `tag` parameter (array contains) on `/api/wallets`
+- **Nicknames for Favorites** - Assign custom names to tracked wallets
+  - Inline edit UI with pencil icon in Wallets tab
+  - PATCH endpoint on `/api/favorites` for updating nickname/notes
+  - Nicknames are private per user
+- **CSV Export** - Download current wallet list as CSV file
+  - Exports address, PnL, trades, tokens, tags, last trade date
+  - File named `signal-wallets-YYYY-MM-DD.csv`
+- **Loading Skeletons** - Animated skeleton placeholders instead of spinners
+  - Dashboard wallet table (8-row skeleton)
+  - Wallet details sidebar (stats grid, chart, history placeholders)
+  - Favorite details panel (full skeleton layout)
+
+### Changed
+- Docs page completely rewritten for end users
+  - Removed technical content (API endpoints, config code, Codex references)
+  - Sections: Introduction, Getting Started, How It Works, Wallet Tracking, FAQ
+  - FAQ items are now accordion-style with smooth open/close animations
+  - Added new FAQs: search, appearances, CSV export
+  - Sidebar navigation with scroll-to-section on click
+- "Docs" link added to landing page main navigation
+- Dashboard "How it works" box updated to reflect current scanning process
+- Favorite wallet list shows nickname prominently above address
+- Remove button uses trash icon, edit button uses pencil icon
+
+### Removed
+- Loading spinner animations (replaced by skeletons)
+- Inaccurate docs content (alerts, v1 API routes, token holding requirements)
+
 ## [0.8.0] - 2026-02-06
 
 ### Added
