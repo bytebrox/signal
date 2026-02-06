@@ -67,6 +67,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ wallets: [], error: error.message }, { status: 500 })
     }
     
+    // Fetch last token for each wallet from history
+    const walletsWithTokens = await Promise.all(
+      (data || []).map(async (wallet) => {
+        const { data: lastToken } = await supabase
+          .from('wallet_token_history')
+          .select('token_symbol')
+          .eq('wallet_address', wallet.address)
+          .order('discovered_at', { ascending: false })
+          .limit(1)
+          .single()
+        
+        return {
+          ...wallet,
+          last_token_symbol: lastToken?.token_symbol || null
+        }
+      })
+    )
+    
     // Fetch aggregate stats for ALL wallets (not just current page)
     const { data: allWallets } = await supabase
       .from('tracked_wallets')
@@ -81,7 +99,7 @@ export async function GET(request: Request) {
     }
     
     return NextResponse.json({
-      wallets: data || [],
+      wallets: walletsWithTokens || [],
       total: count || 0,
       limit,
       offset,
