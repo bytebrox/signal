@@ -482,54 +482,7 @@ export default function App() {
                 </p>
               )}
             </div>
-            <button
-              onClick={triggerScan}
-              disabled={scanning}
-              className={`px-6 py-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                scanning 
-                  ? 'bg-white/10 text-muted cursor-not-allowed' 
-                  : 'bg-white text-black hover:bg-white/90'
-              }`}
-            >
-              {scanning ? (
-                <>
-                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Scanning...
-                </>
-              ) : (
-                <>
-                  <span>◈</span>
-                  Run Scan
-                </>
-              )}
-            </button>
           </div>
-          
-          {/* Scan Result */}
-          {scanResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`mt-4 p-4 rounded-lg ${
-                scanResult.success ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'
-              }`}
-            >
-              <p className={`text-sm font-medium ${scanResult.success ? 'text-emerald-500' : 'text-red-500'}`}>
-                {scanResult.success ? '✓' : '✕'} {scanResult.message}
-              </p>
-              {scanResult.tokensScanned !== undefined && (
-                <p className="text-xs text-muted mt-1">
-                  Tokens: {scanResult.tokensScanned} | New findings: {scanResult.newFindings || 0} | Wallets updated: {scanResult.walletsUpdated}
-                </p>
-              )}
-              {scanResult.error && (
-                <p className="text-xs text-red-400 mt-1">{scanResult.error}</p>
-              )}
-            </motion.div>
-          )}
         </div>
 
         {/* Stats Row */}
@@ -623,7 +576,7 @@ export default function App() {
               ) : wallets.length === 0 ? (
                 <div className="p-12 text-center text-muted">
                   <p className="mb-2">No wallets tracked yet</p>
-                  <p className="text-sm">Click "Run Scan" to discover profitable wallets</p>
+                  <p className="text-sm">Wallets are scanned automatically every 15 minutes</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
