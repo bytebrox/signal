@@ -4,6 +4,22 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.1] - 2026-02-06
+
+### Added
+- **Drag-and-Drop Favorites** - Reorder tracked wallets via drag-and-drop in the Wallets tab
+  - 6-dot drag handle on each favorite
+  - Visual feedback (scale, green highlight, drop-zone indicator)
+  - Optimistic UI with automatic rollback on error
+  - Persisted to database via `sort_order` field and PUT `/api/favorites`
+- **Security Hardening**
+  - Input validation: Solana Base58 address format check on all endpoints
+  - Nickname max 50 chars, notes max 500 chars
+  - Scan endpoint authentication now mandatory (fails if SCAN_API_KEY not set)
+  - Removed service-role-key fallback to anon key on all API routes
+  - Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+  - RLS policies: users and user_favorites blocked for anonymous access
+
 ## [0.9.0] - 2026-02-06
 
 ### Added

@@ -54,7 +54,7 @@ Browse all discovered wallets sorted by profit. Search by address, filter by tag
 Clicking a wallet opens a detail panel with a 30-day PnL chart, full token history, and links to Solscan/Birdeye.
 
 ### Favorites & Nicknames
-Track wallets by adding them to your personal watchlist. Assign custom nicknames to quickly identify them. Everything is private — tied to your connected wallet, invisible to others.
+Track wallets by adding them to your personal watchlist. Assign custom nicknames to quickly identify them. Drag and drop to reorder your favorites — the order is saved. Everything is private — tied to your connected wallet, invisible to others.
 
 ### CSV Export
 Download the current wallet list as a CSV file for your own analysis or tracking.

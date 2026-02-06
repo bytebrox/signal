@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS user_favorites (
   wallet_address TEXT NOT NULL,
   nickname TEXT,
   notes TEXT,
+  sort_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, wallet_address)
 );
@@ -30,20 +31,24 @@ CREATE INDEX IF NOT EXISTS idx_favorites_wallet ON user_favorites(wallet_address
 -- RLS for users
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can read own data" ON users
-  FOR SELECT USING (true);
-
-CREATE POLICY "Service role can manage users" ON users
+-- Only service role can read/write users (API routes use service role key)
+CREATE POLICY "Service role full access on users" ON users
   FOR ALL USING (auth.role() = 'service_role');
+
+-- Block direct anon access to users table
+CREATE POLICY "No public access to users" ON users
+  FOR SELECT USING (false);
 
 -- RLS for user_favorites
 ALTER TABLE user_favorites ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can read own favorites" ON user_favorites
-  FOR SELECT USING (true);
-
-CREATE POLICY "Service role can manage favorites" ON user_favorites
+-- Only service role can read/write favorites (API routes use service role key)
+CREATE POLICY "Service role full access on favorites" ON user_favorites
   FOR ALL USING (auth.role() = 'service_role');
+
+-- Block direct anon access to favorites
+CREATE POLICY "No public access to favorites" ON user_favorites
+  FOR SELECT USING (false);
 
 -- Tracked Wallets Table
 CREATE TABLE IF NOT EXISTS tracked_wallets (

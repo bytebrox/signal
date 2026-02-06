@@ -3,10 +3,9 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { Codex, TokenRankingAttribute, RankingDirection } from '@codex-data/sdk'
 import { config } from '@/lib/config'
 
-// Lazy initialization
 function getSupabase(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) return null
   return createClient(url, key)
 }
@@ -465,18 +464,22 @@ function generateTags(appearances: number, totalPnlUsd: number, totalPnlPercent:
 
 export async function POST(request: Request) {
   try {
-    // API Key authentication for cron jobs
+    // API Key authentication (required)
     const authHeader = request.headers.get('authorization')
     const apiKey = process.env.SCAN_API_KEY
     
-    if (apiKey) {
-      // If API key is configured, require it
-      if (!authHeader || authHeader !== `Bearer ${apiKey}`) {
-        return NextResponse.json(
-          { success: false, error: 'Unauthorized - Invalid or missing API key' },
-          { status: 401 }
-        )
-      }
+    if (!apiKey) {
+      return NextResponse.json(
+        { success: false, error: 'Server misconfigured - SCAN_API_KEY not set' },
+        { status: 500 }
+      )
+    }
+    
+    if (!authHeader || authHeader !== `Bearer ${apiKey}`) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
     
     const supabase = getSupabase()

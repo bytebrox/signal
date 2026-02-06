@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Lazy initialization
+const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
+
+function isValidSolanaAddress(addr: string): boolean {
+  return typeof addr === 'string' && SOLANA_ADDRESS_RE.test(addr)
+}
+
 function getSupabase(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) return null
   return createClient(url, key)
 }
@@ -21,13 +26,8 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { walletAddress } = body
 
-    if (!walletAddress || typeof walletAddress !== 'string') {
-      return NextResponse.json({ error: 'Wallet address is required' }, { status: 400 })
-    }
-
-    // Validate Solana address format (base58, 32-44 chars)
-    if (walletAddress.length < 32 || walletAddress.length > 44) {
-      return NextResponse.json({ error: 'Invalid wallet address format' }, { status: 400 })
+    if (!walletAddress || !isValidSolanaAddress(walletAddress)) {
+      return NextResponse.json({ error: 'Valid Solana wallet address is required' }, { status: 400 })
     }
 
     // Check if user exists
@@ -105,8 +105,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const walletAddress = searchParams.get('wallet')
 
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet address is required' }, { status: 400 })
+    if (!walletAddress || !isValidSolanaAddress(walletAddress)) {
+      return NextResponse.json({ error: 'Valid Solana wallet address is required' }, { status: 400 })
     }
 
     const { data: user, error } = await supabase

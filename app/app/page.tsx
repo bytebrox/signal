@@ -116,6 +116,10 @@ export default function App() {
   const [nicknameInput, setNicknameInput] = useState('')
   const [notesInput, setNotesInput] = useState('')
   
+  // Drag and drop
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  
   // Navigation state
   const [activeTab, setActiveTab] = useState<'dashboard' | 'wallets' | 'settings'>('dashboard')
   
@@ -417,6 +421,57 @@ export default function App() {
     }
   }
 
+  // Drag and drop reorder
+  const handleDragStart = (index: number) => {
+    setDragIndex(index)
+  }
+  
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+  
+  const handleDragEnd = () => {
+    setDragIndex(null)
+    setDragOverIndex(null)
+  }
+  
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (dragIndex === null || dragIndex === dropIndex) {
+      handleDragEnd()
+      return
+    }
+    
+    // Optimistic reorder
+    const prev = [...favoriteWallets]
+    const updated = [...favoriteWallets]
+    const [moved] = updated.splice(dragIndex, 1)
+    updated.splice(dropIndex, 0, moved)
+    setFavoriteWallets(updated)
+    handleDragEnd()
+    
+    // Persist to DB
+    if (!publicKey) return
+    try {
+      const order = updated.map((fav, i) => ({
+        wallet_address: fav.wallet_address,
+        sort_order: i
+      }))
+      const res = await fetch('/api/favorites', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userWallet: publicKey.toBase58(), order })
+      })
+      if (!res.ok) {
+        // Rollback on failure
+        setFavoriteWallets(prev)
+      }
+    } catch {
+      setFavoriteWallets(prev)
+    }
+  }
+  
   // Trigger manual scan
   const triggerScan = async () => {
     setScanning(true)
@@ -1143,8 +1198,18 @@ export default function App() {
                       <h2 className="font-semibold">Tracked Wallets ({favoriteWallets.length})</h2>
                     </div>
                     <div className="divide-y divide-border">
-                      {favoriteWallets.map((fav) => (
-                        <div key={fav.wallet_address}>
+                      {favoriteWallets.map((fav, index) => (
+                        <div 
+                          key={fav.wallet_address}
+                          draggable
+                          onDragStart={() => handleDragStart(index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDragEnd={handleDragEnd}
+                          onDrop={(e) => handleDrop(e, index)}
+                          className={`transition-all duration-150 ${
+                            dragIndex === index ? 'opacity-30 scale-[0.97] bg-emerald-500/10 ring-1 ring-emerald-500/30 rounded-lg' : ''
+                          } ${dragOverIndex === index && dragIndex !== index ? 'border-t-2 border-t-emerald-500 bg-white/[0.03]' : ''}`}
+                        >
                           <div 
                             onClick={() => {
                               if (editingNickname !== fav.wallet_address) {
@@ -1158,6 +1223,20 @@ export default function App() {
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
+                                {/* Drag handle */}
+                                <div 
+                                  className="cursor-grab active:cursor-grabbing text-muted/40 hover:text-muted transition-colors shrink-0"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="9" cy="5" r="1.5" />
+                                    <circle cx="15" cy="5" r="1.5" />
+                                    <circle cx="9" cy="12" r="1.5" />
+                                    <circle cx="15" cy="12" r="1.5" />
+                                    <circle cx="9" cy="19" r="1.5" />
+                                    <circle cx="15" cy="19" r="1.5" />
+                                  </svg>
+                                </div>
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center text-sm font-mono text-emerald-400">
                                   {fav.wallet_address.slice(0, 2)}
                                 </div>
