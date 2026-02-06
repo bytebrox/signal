@@ -3,6 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
+import Nav from '@/app/components/Nav'
+import Footer from '@/app/components/Footer'
 
 const sections = [
   { id: 'intro', title: 'Introduction' },
@@ -70,27 +72,38 @@ export default function Docs() {
 
   return (
     <div className="min-h-screen bg-bg">
-      {/* Header */}
-      <header className="border-b border-border sticky top-0 bg-bg/80 backdrop-blur-xl z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <img src="/logo_w.png" alt="SIGNAL" className="h-6 w-auto" />
-              <span className="text-xl font-semibold tracking-tight">SIGNAL</span>
-            </Link>
-            <span className="text-muted">/</span>
-            <span className="text-muted">Documentation</span>
-          </div>
+      <Nav
+        activePage="docs"
+        rightContent={
           <Link 
             href="/app" 
-            className="px-5 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
+            className="px-4 sm:px-5 py-2 sm:py-2.5 bg-white text-black text-xs sm:text-sm font-medium rounded-full hover:bg-white/90 transition-colors flex-shrink-0"
           >
             Launch App
           </Link>
-        </div>
-      </header>
+        }
+        secondaryNav={
+          <div className="lg:hidden border-t border-border overflow-x-auto scrollbar-hide">
+            <div className="flex px-4 sm:px-6">
+              {sections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className={`px-3 py-2.5 text-xs whitespace-nowrap font-medium transition-colors border-b-2 ${
+                    active === section.id 
+                      ? 'text-emerald-400 border-emerald-500' 
+                      : 'text-muted border-transparent hover:text-white'
+                  }`}
+                >
+                  {section.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        }
+      />
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="px-4 sm:px-8 lg:px-16 py-6 sm:py-12">
         <div className="grid lg:grid-cols-[240px_1fr] gap-12">
           {/* Sidebar */}
           <aside className="hidden lg:block">
@@ -119,8 +132,8 @@ export default function Docs() {
               className="prose prose-invert max-w-none"
             >
               <section id="intro" className="mb-16">
-                <h1 className="text-4xl font-bold tracking-tight mb-6">Introduction</h1>
-                <p className="text-lg text-muted leading-relaxed mb-6">
+                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight mb-4 sm:mb-6">Introduction</h1>
+                <p className="text-base sm:text-lg text-muted leading-relaxed mb-4 sm:mb-6">
                   SIGNAL is a smart money intelligence platform that identifies and tracks 
                   consistently profitable wallets on Solana. Our scanner finds trending tokens 
                   and extracts the wallets behind the biggest wins.
@@ -157,7 +170,7 @@ export default function Docs() {
               </section>
 
               <section id="getting-started" className="mb-16">
-                <h2 className="text-3xl font-bold tracking-tight mb-6">Getting Started</h2>
+                <h2 className="text-xl sm:text-3xl font-bold tracking-tight mb-4 sm:mb-6">Getting Started</h2>
                 
                 <div className="space-y-4">
                   <div className="p-6 rounded-xl bg-surface border border-border">
@@ -194,7 +207,7 @@ export default function Docs() {
               </section>
 
               <section id="scanning" className="mb-16">
-                <h2 className="text-3xl font-bold tracking-tight mb-6">How It Works</h2>
+                <h2 className="text-xl sm:text-3xl font-bold tracking-tight mb-4 sm:mb-6">How It Works</h2>
                 <p className="text-muted leading-relaxed mb-6">
                   SIGNAL uses a two-step process to discover the most profitable wallets on Solana:
                 </p>
@@ -247,17 +260,17 @@ export default function Docs() {
               </section>
 
               <section id="wallets" className="mb-16">
-                <h2 className="text-3xl font-bold tracking-tight mb-6">Wallet Tracking</h2>
+                <h2 className="text-xl sm:text-3xl font-bold tracking-tight mb-4 sm:mb-6">Wallet Tracking</h2>
                 <p className="text-muted leading-relaxed mb-6">
                   Each tracked wallet includes the following information:
                 </p>
                 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full text-xs sm:text-sm">
                     <thead>
                       <tr className="border-b border-border">
-                        <th className="text-left py-4 font-semibold">Data Point</th>
-                        <th className="text-left py-4 font-semibold">Description</th>
+                        <th className="text-left py-3 sm:py-4 px-4 sm:px-0 font-semibold whitespace-nowrap">Data Point</th>
+                        <th className="text-left py-3 sm:py-4 px-4 sm:px-0 font-semibold">Description</th>
                       </tr>
                     </thead>
                     <tbody className="text-muted">
@@ -304,7 +317,7 @@ export default function Docs() {
               </section>
 
               <section id="faq" className="mb-16">
-                <h2 className="text-3xl font-bold tracking-tight mb-6">FAQ</h2>
+                <h2 className="text-xl sm:text-3xl font-bold tracking-tight mb-4 sm:mb-6">FAQ</h2>
                 
                 <div className="space-y-4">
                   {[
@@ -389,6 +402,7 @@ export default function Docs() {
           </main>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

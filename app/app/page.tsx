@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
+import Nav from '@/app/components/Nav'
+import Footer from '@/app/components/Footer'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -525,37 +527,10 @@ export default function App() {
         }}
       />
       
-      {/* Header */}
-      <header className="border-b border-border bg-bg/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <img src="/logo_w.png" alt="SIGNAL" className="h-6 w-auto" />
-              <span className="text-xl font-semibold tracking-tight">SIGNAL</span>
-            </Link>
-            <nav className="hidden md:flex items-center gap-6 text-sm text-muted">
-              <button 
-                onClick={() => setActiveTab('dashboard')}
-                className={activeTab === 'dashboard' ? 'text-white' : 'hover:text-white transition-colors'}
-              >
-                Dashboard
-              </button>
-              <button 
-                onClick={() => setActiveTab('wallets')}
-                className={activeTab === 'wallets' ? 'text-white' : 'hover:text-white transition-colors'}
-              >
-                Wallets {favorites.size > 0 && <span className="ml-1 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-xs">{favorites.size}</span>}
-              </button>
-              <button 
-                onClick={() => setActiveTab('settings')}
-                className={activeTab === 'settings' ? 'text-white' : 'hover:text-white transition-colors'}
-              >
-                Settings
-              </button>
-            </nav>
-          </div>
-          
-          <div className="flex items-center gap-4">
+      <Nav
+        activePage="app"
+        rightContent={
+          <>
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-border text-xs">
               <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-muted'}`} />
               <span className="text-muted">Solana</span>
@@ -563,7 +538,7 @@ export default function App() {
             <button
               onClick={handleConnectClick}
               disabled={userLoading}
-              className={`px-5 py-2.5 text-sm font-medium rounded-full transition-all ${
+              className={`px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-full transition-all ${
                 connected 
                   ? 'bg-surface border border-border text-white hover:border-white/20' 
                   : 'bg-white text-black hover:bg-white/90'
@@ -582,11 +557,35 @@ export default function App() {
                 'Connect Wallet'
               )}
             </button>
+          </>
+        }
+        secondaryNav={connected ? (
+          <div className="border-t border-border">
+            <div className="max-w-[1800px] mx-auto px-4 flex">
+              {[
+                { key: 'dashboard', label: 'Dashboard', badge: null as number | null },
+                { key: 'wallets', label: 'Wallets', badge: favorites.size > 0 ? favorites.size : null },
+                { key: 'settings', label: 'Settings', badge: null as number | null },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as 'dashboard' | 'wallets' | 'settings')}
+                  className={`px-4 sm:px-6 py-3 text-xs sm:text-sm font-medium text-center transition-colors border-b-2 ${
+                    activeTab === tab.key
+                      ? 'text-emerald-400 border-emerald-500'
+                      : 'text-muted border-transparent hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.badge && <span className="ml-1.5 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-[10px]">{tab.badge}</span>}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </header>
+        ) : undefined}
+      />
 
-      <div className="max-w-[1800px] mx-auto px-6 py-8">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Connect Wallet Notice */}
         {!connected && (
           <motion.div
@@ -702,10 +701,10 @@ export default function App() {
                 background: `radial-gradient(ellipse at top left, rgba(16,185,129,0.06) 0%, transparent 40%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
               }}
             >
-              <div className="px-6 py-4 border-b border-border space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <h2 className="font-semibold">Top Performing Wallets</h2>
+                    <h2 className="font-semibold text-sm sm:text-base">Top Performing Wallets</h2>
                     <button
                       onClick={exportCSV}
                       disabled={wallets.length === 0}
@@ -718,12 +717,12 @@ export default function App() {
                       CSV
                     </button>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {(['all', '24h', '7d', '30d'] as const).map((range) => (
                       <button
                         key={range}
                         onClick={() => handleTimeRangeChange(range)}
-                        className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                        className={`px-2.5 sm:px-3 py-1.5 text-xs rounded-lg transition-colors ${
                           timeRange === range
                             ? 'bg-white/10 text-white'
                             : 'text-muted hover:text-white'
@@ -826,15 +825,15 @@ export default function App() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-0">
                     <thead>
                       <tr className="text-xs text-muted border-b border-border">
-                        <th className="text-left px-6 py-3 font-medium">Wallet</th>
-                        <th className="text-right px-6 py-3 font-medium">Total PnL</th>
-                        <th className="text-right px-6 py-3 font-medium">Avg PnL</th>
-                        <th className="text-right px-6 py-3 font-medium">Trades</th>
-                        <th className="text-right px-6 py-3 font-medium">Tokens</th>
-                        <th className="text-right px-6 py-3 font-medium"></th>
+                        <th className="text-left px-3 sm:px-6 py-3 font-medium">Wallet</th>
+                        <th className="text-right px-3 sm:px-6 py-3 font-medium">Total PnL</th>
+                        <th className="text-right px-3 sm:px-6 py-3 font-medium hidden sm:table-cell">Avg PnL</th>
+                        <th className="text-right px-3 sm:px-6 py-3 font-medium hidden md:table-cell">Trades</th>
+                        <th className="text-right px-3 sm:px-6 py-3 font-medium hidden md:table-cell">Tokens</th>
+                        <th className="text-right px-3 sm:px-6 py-3 font-medium"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -849,13 +848,13 @@ export default function App() {
                             selectedWallet === wallet.address ? 'bg-white/5' : 'hover:bg-white/[0.02]'
                           }`}
                         >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-xs font-mono">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-[10px] sm:text-xs font-mono flex-shrink-0">
                                 {wallet.address.slice(0, 2)}
                               </div>
-                              <div>
-                                <div className="font-mono text-sm">{shortAddress(wallet.address)}</div>
+                              <div className="min-w-0">
+                                <div className="font-mono text-xs sm:text-sm truncate">{shortAddress(wallet.address)}</div>
                                 <div className="flex gap-1 mt-1">
                                   {wallet.tags?.slice(0, 2).map(tag => (
                                     <span key={tag} className="px-1.5 py-0.5 text-[10px] bg-white/5 rounded text-muted">
@@ -866,22 +865,22 @@ export default function App() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right text-emerald-500 font-semibold">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-emerald-500 font-semibold text-xs sm:text-sm whitespace-nowrap">
                             +{wallet.total_pnl || wallet.pnl_percent}%
                           </td>
-                          <td className="px-6 py-4 text-right">+{wallet.pnl_percent}%</td>
-                          <td className="px-6 py-4 text-right text-muted">{wallet.total_trades}</td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-right hidden sm:table-cell">+{wallet.pnl_percent}%</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-muted hidden md:table-cell">{wallet.total_trades}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-right hidden md:table-cell">
                             <span className="px-2 py-1 bg-white/5 rounded text-xs">{wallet.appearances || wallet.winning_tokens}×</span>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-2 sm:px-6 py-3 sm:py-4 text-right">
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation()
                                 toggleFavorite(wallet.address)
                               }}
                               disabled={favoritesLoading.has(wallet.address)}
-                              className={`px-3 py-1.5 text-xs border rounded-lg transition-colors ${
+                              className={`px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs border rounded-lg transition-colors ${
                                 favorites.has(wallet.address)
                                   ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30'
                                   : 'border-border hover:border-white/30'
@@ -890,7 +889,7 @@ export default function App() {
                               {favoritesLoading.has(wallet.address) ? (
                                 <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                               ) : favorites.has(wallet.address) ? (
-                                '★ Saved'
+                                '★'
                               ) : (
                                 'Track'
                               )}
@@ -903,17 +902,17 @@ export default function App() {
                   
                   {/* Pagination */}
                   {totalWallets > walletsPerPage && (
-                    <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-                      <div className="text-sm text-muted">
-                        Showing {((currentPage - 1) * walletsPerPage) + 1}-{Math.min(currentPage * walletsPerPage, totalWallets)} of {totalWallets} wallets
+                    <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="text-xs sm:text-sm text-muted">
+                        {((currentPage - 1) * walletsPerPage) + 1}-{Math.min(currentPage * walletsPerPage, totalWallets)} of {totalWallets}
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handlePageChange(currentPage - 1)}
                           disabled={currentPage === 1}
-                          className="px-3 py-1.5 text-sm border border-border rounded-lg hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-border rounded-lg hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Previous
+                          Prev
                         </button>
                         
                         {/* Page numbers */}
@@ -951,7 +950,7 @@ export default function App() {
                         <button
                           onClick={() => handlePageChange(currentPage + 1)}
                           disabled={currentPage >= Math.ceil(totalWallets / walletsPerPage)}
-                          className="px-3 py-1.5 text-sm border border-border rounded-lg hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-border rounded-lg hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Next
                         </button>
@@ -975,8 +974,8 @@ export default function App() {
                   background: `radial-gradient(ellipse at top right, rgba(16,185,129,0.08) 0%, transparent 50%), linear-gradient(to bottom, rgba(9,9,11,0.95), rgba(9,9,11,0.9))`
                 }}
               >
-                <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                  <h2 className="font-semibold">Wallet Details</h2>
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border flex items-center justify-between">
+                  <h2 className="font-semibold text-sm sm:text-base">Wallet Details</h2>
                   <button 
                     onClick={() => { setSelectedWallet(null); setWalletDetails(null); }}
                     className="text-muted hover:text-white transition-colors"
@@ -984,8 +983,8 @@ export default function App() {
                     ✕
                   </button>
                 </div>
-                <div className="p-6">
-                  <p className="font-mono text-xs break-all text-muted mb-4">{selectedWallet}</p>
+                <div className="p-4 sm:p-6">
+                  <p className="font-mono text-[10px] sm:text-xs break-all text-muted mb-4">{selectedWallet}</p>
                   
                   {/* Stats Summary */}
                   {walletDetails && (
@@ -1642,6 +1641,7 @@ export default function App() {
           </>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

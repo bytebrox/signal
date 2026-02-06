@@ -85,6 +85,9 @@ app/
 ├── page.tsx              # Landing page
 ├── app/page.tsx          # Dashboard (main app)
 ├── docs/page.tsx         # Documentation
+├── components/
+│   ├── Nav.tsx           # Shared navigation (used on all pages)
+│   └── Footer.tsx        # Shared footer (used on all pages)
 ├── api/
 │   ├── scan/             # Scanner endpoint (cron-triggered)
 │   ├── wallets/          # Wallet listing + detail endpoints

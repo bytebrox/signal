@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import Nav from '@/app/components/Nav'
+import Footer from '@/app/components/Footer'
 
 interface LiveWallet {
   address: string
@@ -23,7 +25,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [liveWallets, setLiveWallets] = useState<LiveWallet[]>(fallbackWallets)
   const [loading, setLoading] = useState(true)
-  const [scrolled, setScrolled] = useState(false)
+  
 
   // Format time ago
   const timeAgo = (date: string) => {
@@ -63,15 +65,6 @@ export default function Home() {
     fetchWallets()
   }, [])
 
-  // Scroll detection for nav background
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
   useEffect(() => {
     setMounted(true)
     const interval = setInterval(() => {
@@ -89,39 +82,25 @@ export default function Home() {
         <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-white/[0.02] rounded-full blur-[100px]" />
       </div>
 
-      {/* Nav - Full Width */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 px-8 lg:px-16 py-5 transition-all duration-300 ${
-        scrolled ? 'bg-[#050505]/90 backdrop-blur-xl border-b border-white/5' : ''
-      }`}>
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <img src="/logo_w.png" alt="SIGNAL" className="h-7 w-auto" />
-            <span className="text-xl font-bold tracking-tight">SIGNAL</span>
-          </Link>
-          
-          <div className="hidden md:flex items-center gap-12 text-sm text-white/50">
-            <a href="#features" className="hover:text-white transition-colors duration-300">Features</a>
-            <a href="#how" className="hover:text-white transition-colors duration-300">How it works</a>
-            <Link href="/docs" className="hover:text-white transition-colors duration-300">Docs</Link>
-            <a href="https://github.com/bytebrox/signal" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors duration-300">GitHub</a>
-          </div>
-          
+      <Nav
+        position="fixed"
+        rightContent={
           <Link 
             href="/app" 
-            className="group px-6 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:scale-105 transition-all duration-300"
+            className="group px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black text-xs sm:text-sm font-semibold rounded-full hover:scale-105 transition-all duration-300"
           >
             <span className="flex items-center gap-2">
               Launch App
-              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </span>
           </Link>
-        </div>
-      </nav>
+        }
+      />
 
       {/* Hero - Full Width Asymmetric */}
-      <section className="relative min-h-screen flex items-center">
+      <section className="relative min-h-screen flex items-center pt-20 sm:pt-0">
         {/* Video Background */}
         <video
           autoPlay
@@ -137,7 +116,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-transparent to-[#050505]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-transparent to-transparent" />
         
-        <div className="relative z-10 w-full px-8 lg:px-16 py-32">
+        <div className="relative z-10 w-full px-4 sm:px-8 lg:px-16 py-16 sm:py-32">
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-4 items-center">
             {/* Left Content - Takes 7 columns */}
             <motion.div
@@ -151,7 +130,7 @@ export default function Home() {
                 <span className="text-sm text-emerald-400">Live scanning active</span>
               </div>
               
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter leading-[0.95] mb-8">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter leading-[0.95] mb-6 sm:mb-8">
                 Follow the
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600">
@@ -159,15 +138,15 @@ export default function Home() {
                 </span>
               </h1>
 
-              <p className="text-xl lg:text-2xl text-white/50 mb-12 max-w-2xl leading-relaxed font-light">
+              <p className="text-base sm:text-xl lg:text-2xl text-white/50 mb-8 sm:mb-12 max-w-2xl leading-relaxed font-light">
                 Track wallets with <span className="text-white">exceptional returns</span> across trending Solana tokens. 
                 See what smart money is buying before everyone else.
               </p>
 
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-3 sm:gap-4">
                 <Link
                   href="/app"
-                  className="group relative px-8 py-4 bg-white text-black font-bold rounded-full hover:scale-105 transition-all duration-300 overflow-hidden"
+                  className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-white text-black text-sm sm:text-base font-bold rounded-full hover:scale-105 transition-all duration-300 overflow-hidden"
                 >
                   <span className="relative z-10 flex items-center gap-3">
                     Open App
@@ -180,7 +159,7 @@ export default function Home() {
                   href="https://github.com/bytebrox/signal"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-8 py-4 border border-white/20 rounded-full hover:bg-white/5 transition-all duration-300 font-medium flex items-center gap-3"
+                  className="px-6 sm:px-8 py-3 sm:py-4 border border-white/20 rounded-full hover:bg-white/5 transition-all duration-300 text-sm sm:text-base font-medium flex items-center gap-3"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
@@ -270,7 +249,7 @@ export default function Home() {
         
         {/* Scroll Indicator */}
         <motion.div 
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:block"
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
@@ -305,7 +284,7 @@ export default function Home() {
       </section>
 
       {/* How it Works - Bento Grid Full Width */}
-      <section id="how" className="py-32 px-8 lg:px-16">
+      <section id="how" className="py-16 sm:py-32 px-4 sm:px-8 lg:px-16">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -313,13 +292,13 @@ export default function Home() {
           className="mb-16"
         >
           <span className="text-emerald-500 text-sm font-semibold tracking-wider uppercase mb-4 block">How it works</span>
-          <h2 className="text-4xl lg:text-6xl font-bold tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-tight">
             Three steps to<br />
             <span className="text-white/40">smart money</span>
           </h2>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             {
               step: '01',
@@ -371,7 +350,7 @@ export default function Home() {
       </section>
 
       {/* Features - Full Width Bento */}
-      <section id="features" className="py-32 px-8 lg:px-16">
+      <section id="features" className="py-16 sm:py-32 px-4 sm:px-8 lg:px-16">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -379,13 +358,13 @@ export default function Home() {
           className="mb-16 text-right"
         >
           <span className="text-emerald-500 text-sm font-semibold tracking-wider uppercase mb-4 block">Features</span>
-          <h2 className="text-4xl lg:text-6xl font-bold tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-tight">
             Built for<br />
             <span className="text-white/40">the trenches</span>
           </h2>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { 
               title: 'Wallet Watchlist', 
@@ -443,7 +422,7 @@ export default function Home() {
       </section>
 
       {/* CTA - Full Width */}
-      <section className="pt-32 pb-32 px-8 lg:px-16 relative overflow-hidden z-[1]">
+      <section className="pt-16 sm:pt-32 pb-16 sm:pb-32 px-4 sm:px-8 lg:px-16 relative overflow-hidden z-[1]">
         {/* Background Image */}
         <div className="absolute inset-0 z-[1]">
           {/* Hero Image */}
@@ -467,16 +446,16 @@ export default function Home() {
           viewport={{ once: true }}
           className="relative z-10 text-center max-w-4xl mx-auto"
         >
-          <h2 className="text-5xl lg:text-7xl font-bold tracking-tight mb-8">
+          <h2 className="text-3xl sm:text-5xl lg:text-7xl font-bold tracking-tight mb-6 sm:mb-8">
             Ready to follow<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">smart money?</span>
           </h2>
-          <p className="text-xl text-white/50 mb-12 max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl text-white/50 mb-8 sm:mb-12 max-w-2xl mx-auto">
             Join traders who track the wallets that consistently profit on Solana.
           </p>
           <Link
             href="/app"
-            className="group inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-bold text-lg rounded-full hover:scale-105 transition-all duration-300"
+            className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-white text-black font-bold text-base sm:text-lg rounded-full hover:scale-105 transition-all duration-300"
           >
             Launch App
             <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -486,25 +465,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Footer - Full Width */}
-      <footer className="py-12 px-8 lg:px-16 border-t border-white/5">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-3">
-            <img src="/logo_w.png" alt="SIGNAL" className="h-6 w-auto" />
-            <span className="font-bold text-lg">SIGNAL</span>
-          </div>
-          
-          <div className="flex items-center gap-8 text-sm text-white/40">
-            <a href="https://github.com/bytebrox/signal" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
-            <a href="https://x.com/bytebrox" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</a>
-            <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-          </div>
-          
-          <div className="text-sm text-white/30">
-            Built for the trenches · 2026
-          </div>
-        </div>
-      </footer>
+      <Footer />
       
       {/* Custom Styles */}
       <style jsx>{`

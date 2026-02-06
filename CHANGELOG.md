@@ -4,6 +4,21 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.2] - 2026-02-06
+
+### Changed
+- **Shared Navigation Component** — Extracted Nav into reusable `app/components/Nav.tsx`, used across all pages
+  - Identical navigation on Landing Page, Dashboard, and Docs (Features, How it works, Docs, GitHub, Twitter)
+  - Full-width layout with consistent padding on every page
+  - Smart anchor links: `#section` on landing page, `/#section` on other pages
+- **Shared Footer Component** — Extracted Footer into reusable `app/components/Footer.tsx`
+  - Footer now visible on all pages (Landing, Dashboard, Docs), not just the landing page
+- **Docs Page Full Width** — Docs content now uses full page width instead of constrained `max-w-7xl`
+- **Clean Imports** — All component imports use `@/app/components/` path alias
+
+### Removed
+- Navigation separator line between link groups
+
 ## [0.9.1] - 2026-02-06
 
 ### Added
