@@ -246,16 +246,35 @@ export default function Docs() {
                 </div>
 
                 <div className="p-6 rounded-xl bg-surface border border-border">
-                  <h4 className="font-semibold mb-2">Auto Tags</h4>
-                  <p className="text-muted text-sm mb-3">Wallets are automatically tagged based on their performance:</p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1.5 rounded-full text-xs bg-emerald-500/20 text-emerald-400">Smart Money</span>
-                    <span className="px-3 py-1.5 rounded-full text-xs bg-blue-500/20 text-blue-400">Whale</span>
-                    <span className="px-3 py-1.5 rounded-full text-xs bg-purple-500/20 text-purple-400">Insider</span>
-                    <span className="px-3 py-1.5 rounded-full text-xs bg-amber-500/20 text-amber-400">Consistent</span>
-                    <span className="px-3 py-1.5 rounded-full text-xs bg-white/10 text-white/70">Active</span>
-                    <span className="px-3 py-1.5 rounded-full text-xs bg-pink-500/20 text-pink-400">10x Hunter</span>
+                  <h4 className="font-semibold mb-4">Auto Tags</h4>
+                  <p className="text-muted text-sm mb-4">Wallets are automatically tagged based on their performance. Here's what each tag means and how it's assigned:</p>
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-lg bg-white/[0.02]">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-400 mb-2">Smart Money</span>
+                      <p className="text-muted text-sm">Total profit above 500% <strong className="text-white/80">and</strong> at least 5 trades. These wallets don't just get lucky once — they consistently make profitable moves across multiple tokens.</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-white/[0.02]">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs bg-blue-500/20 text-blue-400 mb-2">Whale</span>
+                      <p className="text-muted text-sm">Total realized profit exceeds $100,000. These are large-capital traders whose moves can indicate significant market conviction.</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-white/[0.02]">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs bg-purple-500/20 text-purple-400 mb-2">Insider</span>
+                      <p className="text-muted text-sm">Profit above 1,000% <strong className="text-white/80">and</strong> total PnL exceeds $5,000. Exceptional performance that suggests deep market knowledge or very early positioning.</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-white/[0.02]">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs bg-pink-500/20 text-pink-400 mb-2">10x Hunter</span>
+                      <p className="text-muted text-sm">Total profit above 1,000%. These wallets have achieved at least a 10x return across their tracked tokens.</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-white/[0.02]">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs bg-amber-500/20 text-amber-400 mb-2">Consistent</span>
+                      <p className="text-muted text-sm">Found profiting on 3 or more different tokens. Not a one-hit wonder — this wallet keeps showing up across multiple trending tokens.</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-white/[0.02]">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs bg-white/10 text-white/70 mb-2">Active</span>
+                      <p className="text-muted text-sm">More than 30 total trades. A high-frequency trader who is actively participating in the market.</p>
+                    </div>
                   </div>
+                  <p className="text-muted/60 text-xs mt-4">A wallet can have multiple tags at once. For example, a wallet with 1,500% profit, $120k PnL, and 40 trades would get: Smart Money, Whale, Insider, 10x Hunter, and Active.</p>
                 </div>
               </section>
 
