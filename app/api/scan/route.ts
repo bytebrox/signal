@@ -688,6 +688,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: upsertError.message }, { status: 500 })
     }
     
+    // Debug: check if lastTradeAt values are real API timestamps or fallback
+    const sampleTraders = allTraders.slice(0, 3).map(t => ({
+      wallet: t.walletAddress.slice(0, 8) + '...',
+      lastTradeAt: t.lastTradeAt,
+      lastTradeAtDate: t.lastTradeAt ? new Date(t.lastTradeAt * 1000).toISOString() : 'none',
+    }))
+    
     return NextResponse.json({
       success: true,
       message: 'Scan completed successfully',
@@ -699,6 +706,10 @@ export async function POST(request: Request) {
         minRealizedProfit: config.tokenWalletFilters.minRealizedProfitUsd,
         minLiquidity: config.trendingTokens.minLiquidity,
         minVolume: config.trendingTokens.minVolume24h,
+      },
+      debug: {
+        sampleTraders,
+        note: 'lastTradeAt=0 means Codex API did not return lastTransactionAt field'
       },
       timestamp: new Date().toISOString()
     })
