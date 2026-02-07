@@ -100,7 +100,7 @@ export default function App() {
   const [globalStats, setGlobalStats] = useState({
     totalWallets: 0,
     multiTokenWallets: 0,
-    topPnl: 0,
+    totalPnlUsd: 0,
     totalTrades: 0
   })
   
@@ -728,7 +728,7 @@ export default function App() {
           {[
             { label: 'Tracked Wallets', value: globalStats.totalWallets.toString(), change: 'unique addresses' },
             { label: 'Multi-Token Wallets', value: globalStats.multiTokenWallets.toString(), change: '2+ tokens found' },
-            { label: 'Top Total PnL', value: globalStats.topPnl ? `+${globalStats.topPnl}%` : '-', change: 'best performer' },
+            { label: 'Total PnL', value: globalStats.totalPnlUsd ? `$${globalStats.totalPnlUsd >= 1000000 ? `${(globalStats.totalPnlUsd / 1000000).toFixed(1)}M` : globalStats.totalPnlUsd >= 1000 ? `${(globalStats.totalPnlUsd / 1000).toFixed(1)}k` : globalStats.totalPnlUsd.toFixed(0)}` : '-', change: 'realized profit' },
             { label: 'Total Trades', value: globalStats.totalTrades.toLocaleString(), change: 'across all' },
           ].map((stat, i) => (
             <motion.div
