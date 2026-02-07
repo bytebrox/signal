@@ -404,6 +404,30 @@ export default function App() {
     return diffMs > 14 * 24 * 60 * 60 * 1000
   }
   
+  // Export favorite wallets as CSV
+  const exportFavoritesCSV = () => {
+    if (favoriteWallets.length === 0) return
+    const headers = ['Address', 'Nickname', 'Total PnL %', 'Avg PnL %', 'Trades', 'Tokens', 'Tags', 'Last Scan']
+    const rows = favoriteWallets.map(f => [
+      f.wallet_address,
+      `"${(f.nickname || '').replace(/"/g, '""')}"`,
+      f.walletData?.total_pnl || f.walletData?.pnl_percent || '',
+      f.walletData?.pnl_percent || '',
+      f.walletData?.total_trades || '',
+      f.walletData?.appearances || f.walletData?.winning_tokens || '',
+      (f.walletData?.tags || []).join('; '),
+      f.walletData?.last_trade_at || ''
+    ])
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `signal-favorites-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // Export wallets as CSV
   const exportCSV = () => {
     if (wallets.length === 0) return
@@ -1218,6 +1242,17 @@ export default function App() {
                 <h1 className="text-2xl font-semibold">My Wallets</h1>
                 <p className="text-muted mt-1">Your tracked and favorited wallets</p>
               </div>
+              {favoriteWallets.length > 0 && (
+                <button
+                  onClick={exportFavoritesCSV}
+                  className="px-3 py-1.5 text-xs border border-border rounded-lg hover:border-white/30 text-muted hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export CSV
+                </button>
+              )}
             </div>
 
             {favoriteWallets.length === 0 ? (

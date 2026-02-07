@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Wrapped SOL, USDC, USDT, mSOL, jitoSOL, bSOL, JLP excluded by default
   - Prevents wallets from being tracked based on native/stablecoin/LST trading
 
+### Added (continued)
+- **Favorites CSV Export** — Export your personal favorite wallets as CSV from the Wallets tab (includes nickname, address, PnL, tags, last scan)
+
 ### Fixed
 - **Last Scan accuracy** — `last_trade_at` is now updated for all wallets found in each scan, not just new discoveries. Previously, wallets already tracked for a token would not get their timestamp refreshed.
 
