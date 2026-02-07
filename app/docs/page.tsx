@@ -243,6 +243,23 @@ export default function Docs() {
                       multiple tokens, its stats are aggregated.
                     </p>
                   </div>
+                  <div className="p-6 rounded-xl bg-surface border border-border">
+                    <h4 className="font-semibold mb-2">Token Blacklist</h4>
+                    <p className="text-muted text-sm mb-3">
+                      Not all tokens are relevant. The scanner automatically excludes native tokens, stablecoins, and liquid staking tokens to focus on real altcoin/memecoin trading:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {['Wrapped SOL', 'USDC', 'USDT', 'mSOL', 'jitoSOL', 'bSOL', 'JLP'].map(token => (
+                        <span key={token} className="px-2.5 py-1 text-xs rounded-lg bg-red-500/10 text-red-400/80 border border-red-500/20">{token}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-6 rounded-xl bg-surface border border-border">
+                    <h4 className="font-semibold mb-2">Activity Tracking</h4>
+                    <p className="text-muted text-sm">
+                      Every time a wallet shows up in a scan, its &quot;Last Scan&quot; timestamp is updated. This tells you how recently the wallet was spotted trading a trending token. Wallets that haven&apos;t been seen in over 14 days are marked as inactive and can be hidden using the &quot;Hide Inactive&quot; filter in the dashboard.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="p-6 rounded-xl bg-surface border border-border">
@@ -316,6 +333,10 @@ export default function Docs() {
                       <tr className="border-b border-border">
                         <td className="py-4">Token History</td>
                         <td className="py-4">Every token the wallet was found trading</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-4">Last Scan</td>
+                        <td className="py-4">When our scanner last found this wallet in a trending token (e.g. &quot;3h ago&quot;). Wallets not seen in 14+ days are highlighted in amber.</td>
                       </tr>
                       <tr>
                         <td className="py-4">30-Day PnL Chart</td>

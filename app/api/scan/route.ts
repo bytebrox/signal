@@ -498,7 +498,14 @@ export async function POST(request: Request) {
     console.log('Wallet filters:', JSON.stringify(config.tokenWalletFilters, null, 2))
     
     // Step 1: Get trending tokens from Codex using trendingScore24
-    const tokens = await fetchTrendingTokens()
+    const allTokens = await fetchTrendingTokens()
+    
+    // Filter out excluded tokens (native SOL, stablecoins, etc.)
+    const excluded = new Set(config.solana.excludedTokens || [])
+    const tokens = allTokens.filter(t => !excluded.has(t.address))
+    if (tokens.length < allTokens.length) {
+      console.log(`Filtered out ${allTokens.length - tokens.length} excluded tokens (e.g. wrapped SOL)`)
+    }
     console.log(`Found ${tokens.length} trending tokens from Codex`)
     
     if (tokens.length === 0) {
@@ -550,8 +557,25 @@ export async function POST(request: Request) {
     const newTraders = allTraders.filter(t => 
       !historySet.has(`${t.walletAddress}:${t.tokenAddress}`)
     )
+    const existingTraders = allTraders.filter(t => 
+      historySet.has(`${t.walletAddress}:${t.tokenAddress}`)
+    )
     
-    console.log(`${newTraders.length} NEW findings (${allTraders.length - newTraders.length} already tracked)`)
+    console.log(`${newTraders.length} NEW findings (${existingTraders.length} already tracked)`)
+    
+    // Update last_trade_at for ALL wallets found in this scan (even already tracked ones)
+    const allFoundWallets = [...new Set(allTraders.map(t => t.walletAddress))]
+    if (allFoundWallets.length > 0) {
+      const now = new Date().toISOString()
+      // Batch update last_trade_at for all wallets seen in this scan
+      for (const address of allFoundWallets) {
+        await supabase
+          .from('tracked_wallets')
+          .update({ last_trade_at: now, updated_at: now })
+          .eq('address', address)
+      }
+      console.log(`Updated last_trade_at for ${allFoundWallets.length} wallets`)
+    }
     
     if (newTraders.length === 0) {
       return NextResponse.json({
@@ -560,7 +584,7 @@ export async function POST(request: Request) {
         tokensScanned: tokens.length,
         tradersFound: allTraders.length,
         newFindings: 0,
-        walletsUpdated: 0
+        walletsUpdated: allFoundWallets.length
       })
     }
     

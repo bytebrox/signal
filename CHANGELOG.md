@@ -4,7 +4,7 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [0.9.3] - 2026-02-06
+## [0.9.4] - 2026-02-07
 
 ### Added
 - **"Last Scan" Column** — Dashboard table shows when our scanner last found each wallet in a trending token (relative time: `3h ago`, `5d ago`, etc.)
@@ -13,6 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **"Hide Inactive" Filter** — Toggle button in the filter bar to hide wallets not found in any scan for 14+ days
   - Server-side filtering for correct pagination
   - Configurable threshold via `display.inactiveDays` in `lib/config.ts`
+- **Token Blacklist** — Configurable list of excluded tokens in `lib/config.ts`
+  - Wrapped SOL, USDC, USDT, mSOL, jitoSOL, bSOL, JLP excluded by default
+  - Prevents wallets from being tracked based on native/stablecoin/LST trading
+
+### Fixed
+- **Last Scan accuracy** — `last_trade_at` is now updated for all wallets found in each scan, not just new discoveries. Previously, wallets already tracked for a token would not get their timestamp refreshed.
 
 ## [0.9.2] - 2026-02-06
 

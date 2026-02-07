@@ -32,6 +32,7 @@ For each qualifying token, we analyze the wallets that traded it. This is where 
 - **Real buys** — Wallets that received tokens via transfers (not actual purchases) are excluded. This prevents inflated profit numbers from airdrops or token sends.
 - **Recent activity** — Dormant wallets are skipped. We only want traders who are currently active.
 - **Position size** — Extremely large or tiny positions are filtered to focus on realistic trading behavior.
+- **Token blacklist** — Native tokens (SOL), stablecoins (USDC, USDT), and liquid staking tokens (mSOL, jitoSOL, bSOL) are excluded. Only real altcoin/memecoin trading counts.
 
 When a wallet passes all filters, it gets saved to the database with its stats. If the same wallet shows up across multiple tokens in future scans, its statistics are aggregated — and that's when it becomes really interesting.
 
@@ -49,7 +50,7 @@ Wallets are automatically tagged based on their performance profile:
 ## What You Can Do
 
 ### Dashboard
-Browse all discovered wallets sorted by profit. Search by address, filter by tags, switch between time ranges (24h, 7d, 30d), and paginate through results. Each wallet row shows total PnL, average PnL, trade count, token appearances, and tags.
+Browse all discovered wallets sorted by profit. Search by address, filter by tags, switch between time ranges (24h, 7d, 30d), and paginate through results. Each wallet row shows total PnL, average PnL, trade count, token appearances, tags, and a "Last Scan" indicator showing when the wallet was last spotted in a trending token. Inactive wallets (not seen in 14+ days) can be hidden with a single click.
 
 Clicking a wallet opens a detail panel with a 30-day PnL chart, full token history, and links to Solscan/Birdeye.
 

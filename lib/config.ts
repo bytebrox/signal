@@ -11,6 +11,16 @@ export const config = {
   // ===========================================
   solana: {
     networkId: 1399811149,  // Codex Network ID for Solana
+    // Tokens to exclude from scanning (native tokens, stablecoins, wrapped assets, LSTs)
+    excludedTokens: [
+      'So11111111111111111111111111111111111111112',  // Wrapped SOL (native)
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
+      'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',  // mSOL (Marinade)
+      'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // jitoSOL
+      'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1',  // bSOL (BlazeStake)
+      '27G8MtK7VnTknkBAMA1biGBHjEJRfKwrPoSmHdMkiT5c', // JLP (Jupiter LP)
+    ],
   },
 
   // ===========================================
