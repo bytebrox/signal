@@ -79,8 +79,10 @@ export async function GET(request: Request) {
     }
     
     // Apply sorting and pagination
+    // When filterType is 'activity', sort by last_trade_at; otherwise by total_pnl
+    const effectiveSort = filterType === 'activity' ? 'last_trade_at' : (sortBy || 'total_pnl')
     const { data, error, count } = await query
-      .order(sortBy, { ascending: false })
+      .order(effectiveSort, { ascending: false })
       .range(offset, offset + limit - 1)
     
     if (error) {

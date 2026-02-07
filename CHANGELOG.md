@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - **Last Scan accuracy** — `last_trade_at` is now updated for all wallets found in each scan, not just new discoveries. Previously, wallets already tracked for a token would not get their timestamp refreshed.
+- **Sort by Last Activity** — Switching to "Last Activity" now actually sorts wallets by last scan time instead of always sorting by PnL
 
 ## [0.9.2] - 2026-02-06
 
