@@ -1179,7 +1179,7 @@ export default function App() {
                             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
                               {token.entry_cost_usd > 0 && (
                                 <span className="text-[10px] text-muted">
-                                  Entry: <span className="text-white/70">${token.entry_cost_usd >= 1000 ? `${(token.entry_cost_usd / 1000).toFixed(1)}k` : token.entry_cost_usd.toFixed(0)}</span>
+                                  Invest: <span className="text-white/70">${token.entry_cost_usd >= 1000 ? `${(token.entry_cost_usd / 1000).toFixed(1)}k` : token.entry_cost_usd.toFixed(0)}</span>
                                 </span>
                               )}
                               {token.first_buy_at && token.token_deployed_at && (() => {
@@ -1619,7 +1619,7 @@ export default function App() {
                                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                                       {token.entry_cost_usd > 0 && (
                                         <span className="text-[10px] text-muted">
-                                          Entry: <span className="text-white/60">${token.entry_cost_usd >= 1000 ? `${(token.entry_cost_usd / 1000).toFixed(1)}k` : token.entry_cost_usd.toFixed(0)}</span>
+                                          Invest: <span className="text-white/60">${token.entry_cost_usd >= 1000 ? `${(token.entry_cost_usd / 1000).toFixed(1)}k` : token.entry_cost_usd.toFixed(0)}</span>
                                         </span>
                                       )}
                                       {token.first_buy_at && token.token_deployed_at && (() => {
