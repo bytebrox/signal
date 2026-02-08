@@ -4,6 +4,14 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.6] - 2026-02-08
+
+### Added
+- **Anti-Bot Filters** — Three new filters to exclude deployer wallets, sniping bots, and scammers:
+  - `botScore >= 0.7` — Codex bot detection score (filters automated trading bots)
+  - `scammerScore >= 0.7` — Codex scammer detection score (filters rug pull wallets)
+  - `totalTrades < 3` — Minimum 3 trades in 30 days (filters deployer wallets that only buy → distribute → sell)
+
 ## [0.9.5] - 2026-02-08
 
 ### Changed

@@ -231,8 +231,11 @@ export default function Docs() {
                       <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Min. 500% realized profit</li>
                       <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Min. $500 realized profit in USD</li>
                       <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Min. $10 entry cost — real purchases, no airdrops or transfers</li>
+                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Min. 3 trades in 30 days — filters deployer wallets and one-hit-wonders</li>
                       <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Active in the last 7 days</li>
                       <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Position size max. $100k (filters out market-moving whales)</li>
+                      <li className="flex items-center gap-2"><span className="text-red-500">✗</span> Bot score &lt; 0.7 — automated trading bots excluded</li>
+                      <li className="flex items-center gap-2"><span className="text-red-500">✗</span> Scammer score &lt; 0.7 — rug pull wallets excluded</li>
                     </ul>
                   </div>
                   <div className="p-6 rounded-xl bg-surface border border-border">

@@ -30,6 +30,8 @@ For each qualifying token, we analyze the wallets that traded it. This is where 
 
 - **Profit threshold** — Min. 500% realized profit and $500+ in USD. We're not interested in small gains.
 - **Real buys** — Min. $10 entry cost. Wallets that received tokens via airdrops or transfers are excluded. This prevents inflated profit numbers.
+- **Minimum trades** — At least 3 trades in 30 days. Filters deployer wallets that only buy → distribute → sell.
+- **Anti-bot** — Codex bot score and scammer score must be below 0.7. Automated bots and rug pull wallets are excluded.
 - **Recent activity** — Only wallets active in the last 7 days. Dormant wallets are skipped.
 - **Position size** — Max. $100k buy amount to filter out market-moving whales.
 - **Token blacklist** — 37 tokens excluded: native SOL, stablecoins (USDC, USDT, PYUSD, DAI, EURC), LSTs (mSOL, jitoSOL, bSOL, stSOL, jupSOL, etc.), wrapped assets (wETH, wBTC), DeFi tokens (RAY, JUP, ORCA), and established large-caps (BONK, WIF, PYTH, JTO). Only real small-cap/memecoin trading counts.

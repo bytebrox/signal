@@ -412,6 +412,25 @@ async function fetchTokenTraders(
         continue
       }
 
+      // Skip bots and scammers based on Codex scores
+      const botScore = wallet.botScore || 0
+      const scammerScore = wallet.scammerScore || 0
+      if (botScore >= 0.7) {
+        console.log(`  Skipping ${wallet.address.slice(0, 8)}... - bot score too high (${botScore.toFixed(2)})`)
+        continue
+      }
+      if (scammerScore >= 0.7) {
+        console.log(`  Skipping ${wallet.address.slice(0, 8)}... - scammer score too high (${scammerScore.toFixed(2)})`)
+        continue
+      }
+
+      // Skip wallets with too few trades (likely deployer/one-hit-wonder)
+      const totalTrades = (wallet.buys30d || 0) + (wallet.sells30d || 0)
+      if (totalTrades < 3) {
+        console.log(`  Skipping ${wallet.address.slice(0, 8)}... - too few trades (${totalTrades})`)
+        continue
+      }
+
       traders.push({
         walletAddress: wallet.address,
         tokenAddress,
