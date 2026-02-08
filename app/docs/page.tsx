@@ -192,8 +192,8 @@ export default function Docs() {
                     <h4 className="font-semibold mb-2">Step 3: Track Favorites</h4>
                     <p className="text-muted text-sm">
                       Click "Track" on any wallet to save it to your personal watchlist.
-                      Give it a custom nickname, view detailed PnL charts, and check its 
-                      full token history in the Wallets tab.
+                      Give it a custom nickname, view current holdings, detailed PnL charts, 
+                      and check its full token history in the Wallets tab.
                     </p>
                   </div>
                   <div className="p-6 rounded-xl bg-surface border border-border">
@@ -336,6 +336,10 @@ export default function Docs() {
                       <tr className="border-b border-border">
                         <td className="py-4">Token History</td>
                         <td className="py-4">Every token the wallet was found trading, including entry cost (USD spent to acquire), and time after token launch when the wallet first bought. Entries under 30 minutes are highlighted green as a strong insider indicator.</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-4">Current Holdings</td>
+                        <td className="py-4">Live token balances fetched in real-time from the Codex API. Shows each held token with its USD value, portfolio percentage, and total portfolio value. Only holdings worth $1+ are displayed. Links to DexScreener for each token.</td>
                       </tr>
                       <tr className="border-b border-border">
                         <td className="py-4">Last Scan</td>

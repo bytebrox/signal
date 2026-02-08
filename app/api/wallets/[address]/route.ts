@@ -24,6 +24,63 @@ interface ChartDataPoint {
   volumeUsd: number
 }
 
+// Fetch current token holdings from Codex
+interface HoldingData {
+  tokenAddress: string
+  tokenSymbol: string
+  tokenName: string
+  balance: number
+  balanceUsd: number
+  tokenPriceUsd: number
+  firstHeldAt: string | null
+}
+
+async function fetchWalletHoldings(
+  codex: Codex,
+  walletAddress: string
+): Promise<HoldingData[]> {
+  try {
+    const response = await (codex.queries as any).balances({
+      input: {
+        walletAddress,
+        networks: [SOLANA_NETWORK],
+        removeScams: true,
+        limit: 50,
+      }
+    })
+
+    const balances = response?.balances?.items || response?.balances || []
+    const holdings: HoldingData[] = []
+
+    for (const item of balances) {
+      if (!item) continue
+      const balanceUsd = parseFloat(item.balanceUsd || '0')
+      // Only include holdings worth at least $1
+      if (balanceUsd < 1) continue
+
+      const token = item.token || {}
+      holdings.push({
+        tokenAddress: item.tokenAddress || '',
+        tokenSymbol: token.symbol || '???',
+        tokenName: token.name || 'Unknown',
+        balance: item.shiftedBalance || 0,
+        balanceUsd,
+        tokenPriceUsd: parseFloat(item.tokenPriceUsd || '0'),
+        firstHeldAt: item.firstHeldTimestamp
+          ? new Date(item.firstHeldTimestamp * 1000).toISOString()
+          : null,
+      })
+    }
+
+    // Sort by USD value descending
+    holdings.sort((a, b) => b.balanceUsd - a.balanceUsd)
+    return holdings
+  } catch (error) {
+    console.error('Error fetching wallet holdings:', error)
+    return []
+  }
+}
+
 // Fetch PnL chart data from Codex
 async function fetchWalletChart(
   codex: Codex, 
@@ -79,6 +136,7 @@ export async function GET(
     const { address } = params
     const { searchParams } = new URL(request.url)
     const includeChart = searchParams.get('chart') === 'true'
+    const includeHoldings = searchParams.get('holdings') === 'true'
     const chartDays = parseInt(searchParams.get('days') || '30')
     
     if (!address || address.length < 32) {
@@ -112,12 +170,19 @@ export async function GET(
     if (includeChart && codex) {
       chartData = await fetchWalletChart(codex, address, chartDays)
     }
+
+    // Optionally fetch current holdings from Codex
+    let holdings: HoldingData[] = []
+    if (includeHoldings && codex) {
+      holdings = await fetchWalletHoldings(codex, address)
+    }
     
     return NextResponse.json({
       wallet,
       tokenHistory: history || [],
       totalTokens: (history && history.length > 0) ? history.length : (wallet.appearances || 0),
-      chartData: includeChart ? chartData : undefined
+      chartData: includeChart ? chartData : undefined,
+      holdings: includeHoldings ? holdings : undefined,
     })
     
   } catch (error) {

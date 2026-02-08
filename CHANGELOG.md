@@ -4,6 +4,31 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.8] - 2026-02-08
+
+### Changed
+- **Codebase Refactoring** — Split `app/app/page.tsx` (2000 lines) into focused components:
+  - `DashboardTab.tsx` — Dashboard view with wallet table, filters, and detail panel
+  - `WalletsTab.tsx` — Favorites view with drag & drop, nicknames, and detail panel
+  - `SettingsTab.tsx` — Account settings and stats
+  - `HoldingsList.tsx` — Shared holdings component with pagination (eliminates duplication)
+  - `lib/types.ts` — Shared TypeScript interfaces and utility functions
+  - Main page reduced from 2000 to ~250 lines (orchestrator only)
+- **Holdings Pagination** — Max 5 holdings per page with Prev/Next navigation instead of scrolling
+- **Token History priority** — Token History now displayed above Current Holdings in detail panels
+- **Locale-aware dates** — All date displays adapt to the user's browser language automatically
+- **Tab state preserved** — Switching between Dashboard/Wallets/Settings no longer resets tab state
+
+## [0.9.7] - 2026-02-08
+
+### Added
+- **Current Holdings** — Wallet detail panels (Dashboard + Favorites) now show the wallet's current token holdings in real-time via Codex `balances` API
+  - Displays token symbol, name, USD value, portfolio percentage bar, and token count
+  - Only shows holdings worth $1+ (filters dust)
+  - Total portfolio value displayed at the bottom
+  - Links to DexScreener for each held token
+  - Data is fetched live (not cached) to always reflect the current state
+
 ## [0.9.6] - 2026-02-08
 
 ### Added

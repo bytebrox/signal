@@ -54,7 +54,7 @@ Wallets are automatically tagged based on their performance profile:
 ### Dashboard
 Browse all discovered wallets sorted by profit. Search by address, filter by tags, switch between time ranges (24h, 7d, 30d), and paginate through results. Each wallet row shows total PnL, average PnL, trade count, token appearances, tags, and a "Last Scan" indicator showing when the wallet was last spotted in a trending token. Inactive wallets (not seen in 14+ days) can be hidden with a single click.
 
-Clicking a wallet opens a detail panel with a 30-day PnL chart, full token history (including entry cost and time after token launch), and links to Solscan/Birdeye. Entries within 30 minutes of token launch are highlighted as strong insider signals.
+Clicking a wallet opens a detail panel with current holdings (live from Codex), a 30-day PnL chart, full token history (including entry cost and time after token launch), and links to Solscan/Birdeye. Entries within 30 minutes of token launch are highlighted as strong insider signals.
 
 ### Favorites & Nicknames
 Track wallets by adding them to your personal watchlist. Assign custom nicknames to quickly identify them. Drag and drop to reorder your favorites — the order is saved. Everything is private — tied to your connected wallet, invisible to others.
@@ -107,7 +107,7 @@ lib/
 2. The scanner fetches trending tokens from Codex, then extracts top traders per token
 3. Qualifying wallets are upserted into Supabase with aggregated stats
 4. The frontend fetches from `/api/wallets` with pagination, search, and filters
-5. Wallet details (including PnL chart) are fetched on demand from `/api/wallets/[address]`
+5. Wallet details (including PnL chart and current holdings) are fetched on demand from `/api/wallets/[address]`
 
 ## Design Decisions
 
