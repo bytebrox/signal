@@ -26,6 +26,8 @@ interface TokenData {
   priceChange24: number
   volume24: number
   liquidity: number
+  marketCap: number
+  createdAt: number  // Unix timestamp of token creation
 }
 
 interface TopTraderData {
@@ -39,6 +41,9 @@ interface TopTraderData {
   sells: number
   tokenBalance: string
   lastTradeAt: number
+  firstBuyAt: number        // When the wallet first bought this token
+  entryCostUsd: number      // How much USD spent to acquire
+  tokenDeployedAt: number   // When the token was deployed/created (Unix timestamp)
 }
 
 // Fetch trending tokens from Codex using trendingScore24
@@ -90,6 +95,8 @@ async function fetchTrendingTokens(limit: number = config.scanner.tokensToScan):
             priceChange24: ((data as any).change24 || 0) * 100,
             volume24: (data as any).volume24 || 0,
             liquidity: (data as any).liquidity || 0,
+            marketCap: (data as any).marketCap || 0,
+            createdAt: token?.createdAt || 0,
           })
         }
       }
@@ -129,13 +136,15 @@ async function fetchTrendingTokens(limit: number = config.scanner.tokensToScan):
               name: token?.name || 'Unknown',
               priceChange24: ((data as any).change24 || 0) * 100,
               volume24: (data as any).volume24 || 0,
-              liquidity: (data as any).liquidity || 0,
-            })
-          }
+            liquidity: (data as any).liquidity || 0,
+            marketCap: (data as any).marketCap || 0,
+            createdAt: token?.createdAt || 0,
+          })
         }
-      } catch (e) {
-        console.error('Fallback strategy error:', e)
       }
+    } catch (e) {
+      console.error('Fallback strategy error:', e)
+    }
     }
     
     // Strategy 2: High volume with recent activity - active trading
@@ -170,6 +179,8 @@ async function fetchTrendingTokens(limit: number = config.scanner.tokensToScan):
             priceChange24: ((data as any).change24 || 0) * 100,
             volume24: (data as any).volume24 || 0,
             liquidity: (data as any).liquidity || 0,
+            marketCap: (data as any).marketCap || 0,
+            createdAt: token?.createdAt || 0,
           })
         }
       }
@@ -209,6 +220,8 @@ async function fetchTrendingTokens(limit: number = config.scanner.tokensToScan):
             priceChange24: ((data as any).change24 || 0) * 100,
             volume24: (data as any).volume24 || 0,
             liquidity: (data as any).liquidity || 0,
+            marketCap: (data as any).marketCap || 0,
+            createdAt: token?.createdAt || 0,
           })
         }
       }
@@ -331,6 +344,8 @@ async function fetchTokenTraders(
   codex: Codex, 
   tokenAddress: string, 
   tokenSymbol: string,
+  tokenMcap: number = 0,
+  tokenCreatedAt: number = 0,
   limit: number = config.scanner.tradersPerToken
 ): Promise<TopTraderData[]> {
   const { tokenWalletFilters: tf } = config
@@ -352,7 +367,7 @@ async function fetchTokenTraders(
           buys30d: { gte: tf.minBuys30d },
           sells30d: { gte: tf.minSells30d },
           realizedProfitUsd30d: { gte: tf.minRealizedProfitUsd },
-          amountBoughtUsd30d: { gte: tf.minBuyAmountUsd, lte: tf.maxBuyAmountUsd },
+          amountBoughtUsd30d: { gte: tf.minEntryCostUsd, lte: tf.maxBuyAmountUsd },
           // Filter for recent activity
           lastTransactionAt: { gte: cutoffTimestamp },
         },
@@ -377,7 +392,7 @@ async function fetchTokenTraders(
       const buyAmount = parseFloat(wallet.amountBoughtUsd30d || '0')
       
       // Skip wallets with no real buy amount (likely received tokens via transfer)
-      if (buyAmount < tf.minBuyAmountUsd) {
+      if (buyAmount < tf.minEntryCostUsd) {
         console.log(`  Skipping ${wallet.address.slice(0, 8)}... - buy amount too low ($${buyAmount.toFixed(0)})`)
         continue
       }
@@ -390,6 +405,13 @@ async function fetchTokenTraders(
         continue
       }
       
+      // Skip wallets with low entry cost (airdrop/transfer or micro-buys)
+      const entryCostUsd = parseFloat(wallet.tokenAcquisitionCostUsd || '0')
+      if (entryCostUsd < tf.minEntryCostUsd) {
+        console.log(`  Skipping ${wallet.address.slice(0, 8)}... - entry cost too low ($${entryCostUsd.toFixed(0)})`)
+        continue
+      }
+
       traders.push({
         walletAddress: wallet.address,
         tokenAddress,
@@ -400,7 +422,10 @@ async function fetchTokenTraders(
         buys: wallet.buys30d || 0,
         sells: wallet.sells30d || 0,
         tokenBalance: wallet.tokenBalance || '0',
-        lastTradeAt: lastTradeAt
+        lastTradeAt: lastTradeAt,
+        firstBuyAt: wallet.firstTransactionAt || 0,
+        entryCostUsd,
+        tokenDeployedAt: tokenCreatedAt,
       })
     }
     
@@ -522,7 +547,7 @@ export async function POST(request: Request) {
     for (const token of tokens) {
       console.log(`Fetching traders for ${token.symbol} (${token.address.slice(0, 8)}...)`)
       
-      const traders = await fetchTokenTraders(codex, token.address, token.symbol, config.scanner.tradersPerToken)
+      const traders = await fetchTokenTraders(codex, token.address, token.symbol, token.marketCap, token.createdAt, config.scanner.tradersPerToken)
       allTraders.push(...traders)
       
       console.log(`  Found ${traders.length} profitable traders`)
@@ -597,7 +622,10 @@ export async function POST(request: Request) {
       pnl_usd_at_discovery: Math.round(t.realizedProfitUsd * 100) / 100, // Real USD profit
       trades_at_discovery: t.buys + t.sells,
       volume_usd: Math.round(t.volumeUsd * 100) / 100,
-      discovered_at: new Date().toISOString()
+      discovered_at: new Date().toISOString(),
+      first_buy_at: t.firstBuyAt ? new Date(t.firstBuyAt * 1000).toISOString() : null,
+      entry_cost_usd: Math.round(t.entryCostUsd * 100) / 100,
+      token_deployed_at: t.tokenDeployedAt ? new Date(t.tokenDeployedAt * 1000).toISOString() : null,
     }))
     
     const { error: historyError } = await supabase

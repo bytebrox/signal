@@ -76,6 +76,9 @@ CREATE TABLE IF NOT EXISTS wallet_token_history (
   pnl_at_discovery NUMERIC DEFAULT 0,
   trades_at_discovery INTEGER DEFAULT 0,
   discovered_at TIMESTAMPTZ DEFAULT NOW(),
+  first_buy_at TIMESTAMPTZ,                    -- When the wallet first bought this token (from Codex)
+  entry_cost_usd NUMERIC DEFAULT 0,            -- How much USD the wallet spent to acquire the token
+  token_deployed_at TIMESTAMPTZ,               -- When the token was deployed/created
   UNIQUE(wallet_address, token_address)
 );
 

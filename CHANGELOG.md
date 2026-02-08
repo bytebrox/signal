@@ -4,6 +4,20 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.5] - 2026-02-08
+
+### Changed
+- **Token History: "Bought after launch"** — Replaced Market Cap display with time-after-launch indicator. Shows how quickly a wallet bought after a token was deployed (e.g. "5 min after launch"). Entries under 30 minutes are highlighted in green as a strong insider signal.
+- **Entry Cost filter** — Wallets with less than $10 entry cost are now excluded from scans (filters airdrops, transfers, and micro-buys)
+- **Unified `minEntryCostUsd` config** — Single config value ($10) controls both 30d buy volume minimum and token acquisition cost minimum
+
+### Changed
+- **Token Blacklist expanded** — From 7 to 37 excluded tokens: added stablecoins (PYUSD, DAI, EURC, UXD), LSTs (stSOL, jupSOL, hSOL, INF, LST, compassSOL), wrapped assets (wETH, wBTC, tBTC, wSOL), DeFi tokens (JUP, ORCA, MNDE, STEP, SRM, FIDA), and established large-caps (BONK, WIF, PYTH, W, JTO, TENSOR)
+- **Max position size** — Increased from $50k to $100k
+
+### Removed
+- **Market Cap at Discovery** — Replaced by the more meaningful "time after launch" metric. Current MCap was not reflective of the MCap at the wallet's entry point.
+
 ## [0.9.4] - 2026-02-07
 
 ### Added

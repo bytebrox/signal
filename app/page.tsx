@@ -259,11 +259,11 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Stats Marquee - Full Width */}
+      {/* Stats Marquee - Full Width Infinite */}
       <section className="py-6 border-y border-white/5 bg-white/[0.01] overflow-hidden">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...Array(2)].map((_, j) => (
-            <div key={j} className="flex items-center gap-16 mx-8">
+        <div className="flex animate-marquee">
+          {[...Array(4)].map((_, j) => (
+            <div key={j} className="flex items-center shrink-0">
               {[
                 { value: 'High', label: 'Profit Filter' },
                 { value: 'Trending', label: 'Token Scanning' },
@@ -272,9 +272,9 @@ export default function Home() {
                 { value: 'Open', label: 'Source Code' },
                 { value: 'Real', label: 'On-Chain Data' },
               ].map((stat) => (
-                <div key={stat.label} className="flex items-center gap-4">
-                  <span className="text-2xl font-bold text-white">{stat.value}</span>
-                  <span className="text-white/40 text-sm uppercase tracking-wider">{stat.label}</span>
+                <div key={stat.label} className="flex items-center gap-4 px-8">
+                  <span className="text-2xl font-bold text-white whitespace-nowrap">{stat.value}</span>
+                  <span className="text-white/40 text-sm uppercase tracking-wider whitespace-nowrap">{stat.label}</span>
                   <span className="text-emerald-500/50 text-2xl">◆</span>
                 </div>
               ))}
@@ -471,10 +471,10 @@ export default function Home() {
       <style jsx>{`
         @keyframes marquee {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          100% { transform: translateX(-25%); }
         }
         .animate-marquee {
-          animation: marquee 30s linear infinite;
+          animation: marquee 25s linear infinite;
         }
       `}</style>
     </main>

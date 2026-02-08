@@ -228,11 +228,11 @@ export default function Docs() {
                       Only wallets that meet strict criteria make it into the database:
                     </p>
                     <ul className="space-y-1.5 text-muted text-sm">
-                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> High realized profit percentage</li>
-                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Significant profit in dollar terms</li>
-                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Recently active (not dormant wallets)</li>
-                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Real purchases — not just token transfers</li>
-                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Reasonable position sizes</li>
+                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Min. 500% realized profit</li>
+                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Min. $500 realized profit in USD</li>
+                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Min. $10 entry cost — real purchases, no airdrops or transfers</li>
+                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Active in the last 7 days</li>
+                      <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> Position size max. $100k (filters out market-moving whales)</li>
                     </ul>
                   </div>
                   <div className="p-6 rounded-xl bg-surface border border-border">
@@ -246,10 +246,10 @@ export default function Docs() {
                   <div className="p-6 rounded-xl bg-surface border border-border">
                     <h4 className="font-semibold mb-2">Token Blacklist</h4>
                     <p className="text-muted text-sm mb-3">
-                      Not all tokens are relevant. The scanner automatically excludes native tokens, stablecoins, and liquid staking tokens to focus on real altcoin/memecoin trading:
+                      Not all tokens are relevant. The scanner automatically excludes native tokens, stablecoins, liquid staking tokens, wrapped assets, DeFi infrastructure tokens, and established large-caps to focus on real small-cap/memecoin insider trading:
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {['Wrapped SOL', 'USDC', 'USDT', 'mSOL', 'jitoSOL', 'bSOL', 'JLP'].map(token => (
+                      {['SOL', 'USDC', 'USDT', 'PYUSD', 'DAI', 'EURC', 'UXD', 'mSOL', 'jitoSOL', 'bSOL', 'stSOL', 'jupSOL', 'hSOL', 'INF', 'LST', 'compassSOL', 'wETH', 'wBTC', 'tBTC', 'JLP', 'RAY', 'JUP', 'ORCA', 'MNDE', 'STEP', 'SRM', 'FIDA', 'BONK', 'WIF', 'PYTH', 'W', 'JTO', 'TENSOR'].map(token => (
                         <span key={token} className="px-2.5 py-1 text-xs rounded-lg bg-red-500/10 text-red-400/80 border border-red-500/20">{token}</span>
                       ))}
                     </div>
@@ -332,7 +332,7 @@ export default function Docs() {
                       </tr>
                       <tr className="border-b border-border">
                         <td className="py-4">Token History</td>
-                        <td className="py-4">Every token the wallet was found trading</td>
+                        <td className="py-4">Every token the wallet was found trading, including entry cost (USD spent to acquire), and time after token launch when the wallet first bought. Entries under 30 minutes are highlighted green as a strong insider indicator.</td>
                       </tr>
                       <tr className="border-b border-border">
                         <td className="py-4">Last Scan</td>
@@ -363,7 +363,7 @@ export default function Docs() {
                   {[
                     { 
                       q: 'How are wallets selected?', 
-                      a: 'We scan trending Solana tokens and look at the wallets trading them. Only wallets with high realized profits, recent activity, and real buy transactions make it through our filters.'
+                      a: 'We scan trending Solana tokens and look at the wallets trading them. Only wallets with 500%+ profit, $500+ realized gains, $10+ entry cost, and recent activity make it through. Airdrops and token transfers are excluded.'
                     },
                     { 
                       q: 'How often are new wallets added?', 

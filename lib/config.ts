@@ -13,13 +13,62 @@ export const config = {
     networkId: 1399811149,  // Codex Network ID for Solana
     // Tokens to exclude from scanning (native tokens, stablecoins, wrapped assets, LSTs)
     excludedTokens: [
-      'So11111111111111111111111111111111111111112',  // Wrapped SOL (native)
+      // Native / Wrapped
+      'So11111111111111111111111111111111111111112',  // Wrapped SOL
+      
+      // Stablecoins
       'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
       'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
+      '2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo', // PYUSD (PayPal)
+      
+      // Liquid Staking Tokens
       'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',  // mSOL (Marinade)
       'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // jitoSOL
       'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1',  // bSOL (BlazeStake)
+      '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', // stSOL (Lido)
+      '5oVNBeEEQvYi1cX3ir8Dx5n1P7pdxydbGF2X4TxVusJm', // INF (Sanctum Infinity)
+      
+      // Wrapped / Bridge Tokens
+      '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // wETH (Wormhole)
+      '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // wBTC (Wormhole)
+      '6DNSN2BJsaPFdBAy7hc91iKk5y3bkPSBLNeGYCk6SnCe', // tBTC (Threshold)
+      
+      // Wrapped Assets
+      'A9mUU4qviSctJVPJdBGsyN1XDALPHVmFn7Fof1pYRfAS', // wSOL (Wormhole)
+      '7kbnvuGBxxj8AG9qp8Scn56muWGaRaFqxg1FsRp3PaFT', // UXD (Stablecoin)
+      
+      // LP / DeFi Infrastructure Tokens
       '27G8MtK7VnTknkBAMA1biGBHjEJRfKwrPoSmHdMkiT5c', // JLP (Jupiter LP)
+      '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', // RAY (Raydium)
+      'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',  // JUP (Jupiter)
+      'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE',  // ORCA
+      'MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey',  // MNDE (Marinade)
+      
+      // Established Memecoins (too large for insider signals)
+      'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', // BONK
+      
+      // Additional LSTs / Yield Tokens
+      'jupSoLaHXQiZZTSfEWMTRRgpnyFm8f6sZdosWBjx93v',  // jupSOL
+      'he1iusmfkpAdwvxLNGV8Y1iSbj4rUy6yMhEA3fotn9A',  // hSOL (Helius)
+      'LSTxxxnJzKDFSLr4dUkPcmCf5VyryEqzPLz5j4bpxFp',  // LST (Sanctum)
+      'Comp4ssDzXcLeu2MnLuGNNFC4cmLPMng8qWHPvzAMU1h',  // compassSOL
+      
+      // Established Large-Cap Tokens (too large for insider signals)
+      'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', // WIF (dogwifhat)
+      'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3', // PYTH
+      '85VBFQZC9TZkfaptBWjvUw7YbZjy52A6mjtPGjstQAmQ', // W (Wormhole)
+      'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL',  // JTO (Jito)
+      'TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6',  // TENSOR
+      
+      // Additional Stablecoins / Pegged
+      'A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6', // USDY (Ondo)
+      'HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr', // EURC (Circle EUR)
+      'EjmyN6qEC1Tf1JxiG1ae7UTJhUxSwk1TCWNWqxWV4J6o', // DAI (Wormhole)
+      
+      // Additional DeFi / Infrastructure
+      'StepAscQoEioFxxWGnh2sLBDFp9d8rvKz2Yp39iDpyT',  // STEP (Step Finance)
+      'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt',  // SRM (Serum)
+      'EchesyfXePKdLtoiZSL8pBe8Myagyy8ZRqsACNCFGnvp',  // FIDA (Bonfida)
     ],
   },
 
@@ -96,11 +145,12 @@ export const config = {
     // Minimum profit percentage (500 = 500% = 6x return)
     minProfitPercent: 500,
     
-    // Minimum buy amount in USD
-    minBuyAmountUsd: 100,
+    // Minimum entry cost in USD (filters airdrops, transfers, micro-buys)
+    // Used for both 30d buy volume and token acquisition cost
+    minEntryCostUsd: 10,
     
     // Maximum buy amount (filters out whales that move markets)
-    maxBuyAmountUsd: 50000,
+    maxBuyAmountUsd: 100000,
     
     // Maximum days since last trade (filters out inactive wallets)
     // 7 = only wallets active in the last week

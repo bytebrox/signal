@@ -48,6 +48,9 @@ interface TokenHistory {
   pnl_at_discovery: number
   trades_at_discovery: number
   discovered_at: string
+  first_buy_at: string | null
+  entry_cost_usd: number
+  token_deployed_at: string | null
 }
 
 interface ChartDataPoint {
@@ -85,11 +88,11 @@ export default function App() {
   const [dbConfigured, setDbConfigured] = useState(true)
   const [timeRange, setTimeRange] = useState<'all' | '24h' | '7d' | '30d'>('all')
   const [filterType, setFilterType] = useState<'discovered' | 'activity'>('discovered')
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [totalWallets, setTotalWallets] = useState(0)
-  const walletsPerPage = 20
+  const walletsPerPage = 10
   
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('')
@@ -534,7 +537,7 @@ export default function App() {
       setFavoriteWallets(prev)
     }
   }
-  
+
   // Trigger manual scan
   const triggerScan = async () => {
     setScanning(true)
@@ -641,8 +644,8 @@ export default function App() {
                   {tab.badge && <span className="ml-1.5 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-[10px]">{tab.badge}</span>}
                 </button>
               ))}
-            </div>
           </div>
+        </div>
         ) : undefined}
       />
 
@@ -745,9 +748,9 @@ export default function App() {
                 style={{ background: `radial-gradient(ellipse at center, rgba(16,185,129,0.08) 0%, transparent 70%)` }}
               />
               <div className="relative z-10">
-                <div className="text-sm text-muted mb-1">{stat.label}</div>
-                <div className="text-2xl font-semibold">{stat.value}</div>
-                <div className="text-xs text-muted mt-1">{stat.change}</div>
+              <div className="text-sm text-muted mb-1">{stat.label}</div>
+              <div className="text-2xl font-semibold">{stat.value}</div>
+              <div className="text-xs text-muted mt-1">{stat.change}</div>
               </div>
             </motion.div>
           ))}
@@ -1172,6 +1175,39 @@ export default function App() {
                               </div>
                               <span className="text-xs text-muted">{token.trades_at_discovery} trades</span>
                             </div>
+                            {/* Entry details */}
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                              {token.entry_cost_usd > 0 && (
+                                <span className="text-[10px] text-muted">
+                                  Entry: <span className="text-white/70">${token.entry_cost_usd >= 1000 ? `${(token.entry_cost_usd / 1000).toFixed(1)}k` : token.entry_cost_usd.toFixed(0)}</span>
+                                </span>
+                              )}
+                              {token.first_buy_at && token.token_deployed_at && (() => {
+                                const buyTime = new Date(token.first_buy_at!).getTime()
+                                const deployTime = new Date(token.token_deployed_at!).getTime()
+                                const diffMs = buyTime - deployTime
+                                if (diffMs < 0 || diffMs > 365 * 24 * 60 * 60 * 1000) return null
+                                const diffMin = Math.floor(diffMs / 60000)
+                                const diffH = Math.floor(diffMin / 60)
+                                const diffD = Math.floor(diffH / 24)
+                                let label = ''
+                                if (diffMin < 1) label = '< 1 min'
+                                else if (diffMin < 60) label = `${diffMin} min`
+                                else if (diffH < 24) label = `${diffH}h ${diffMin % 60}min`
+                                else label = `${diffD}d ${diffH % 24}h`
+                                const isEarly = diffMin < 30
+                                return (
+                                  <span className={`text-[10px] ${isEarly ? 'text-emerald-400' : 'text-muted'}`}>
+                                    Bought: <span className={isEarly ? 'text-emerald-300 font-medium' : 'text-white/70'}>{label} after launch</span>
+                                  </span>
+                                )
+                              })()}
+                              {token.first_buy_at && !token.token_deployed_at && (
+                                <span className="text-[10px] text-muted">
+                                  1st buy: <span className="text-white/70">{new Date(token.first_buy_at).toLocaleDateString()}</span>
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center justify-between mt-1">
                               <a
                                 href={`https://dexscreener.com/solana/${token.token_address}`}
@@ -1374,11 +1410,11 @@ export default function App() {
                                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
-                                </button>
+                </button>
                               </div>
-                            </div>
-                          </div>
-                          
+              </div>
+            </div>
+
                           {/* Inline Nickname Editor */}
                           {editingNickname === fav.wallet_address && (
                             <div className="px-4 pb-4 space-y-2 border-t border-border/50 pt-3 bg-white/[0.02]">
@@ -1573,11 +1609,45 @@ export default function App() {
                               <div className="text-xs text-muted mb-2">Token History</div>
                               <div className="space-y-2 max-h-48 overflow-y-auto">
                                 {favoriteDetails.tokenHistory.map((token: TokenHistory, idx: number) => (
-                                  <div key={idx} className="flex items-center justify-between p-2 bg-white/5 rounded-lg text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium">{token.token_symbol || 'Unknown'}</span>
+                                  <div key={idx} className="p-2.5 bg-white/5 rounded-lg text-sm">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{token.token_symbol || 'Unknown'}</span>
+                                      </div>
+                                      <div className="text-emerald-500">+{token.pnl_at_discovery}%</div>
                                     </div>
-                                    <div className="text-emerald-500">+{token.pnl_at_discovery}%</div>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                                      {token.entry_cost_usd > 0 && (
+                                        <span className="text-[10px] text-muted">
+                                          Entry: <span className="text-white/60">${token.entry_cost_usd >= 1000 ? `${(token.entry_cost_usd / 1000).toFixed(1)}k` : token.entry_cost_usd.toFixed(0)}</span>
+                                        </span>
+                                      )}
+                                      {token.first_buy_at && token.token_deployed_at && (() => {
+                                        const buyTime = new Date(token.first_buy_at!).getTime()
+                                        const deployTime = new Date(token.token_deployed_at!).getTime()
+                                        const diffMs = buyTime - deployTime
+                                        if (diffMs < 0 || diffMs > 365 * 24 * 60 * 60 * 1000) return null
+                                        const diffMin = Math.floor(diffMs / 60000)
+                                        const diffH = Math.floor(diffMin / 60)
+                                        const diffD = Math.floor(diffH / 24)
+                                        let label = ''
+                                        if (diffMin < 1) label = '< 1 min'
+                                        else if (diffMin < 60) label = `${diffMin} min`
+                                        else if (diffH < 24) label = `${diffH}h ${diffMin % 60}min`
+                                        else label = `${diffD}d ${diffH % 24}h`
+                                        const isEarly = diffMin < 30
+                                        return (
+                                          <span className={`text-[10px] ${isEarly ? 'text-emerald-400' : 'text-muted'}`}>
+                                            Bought: <span className={isEarly ? 'text-emerald-300 font-medium' : 'text-white/60'}>{label} after launch</span>
+                                          </span>
+                                        )
+                                      })()}
+                                      {token.first_buy_at && !token.token_deployed_at && (
+                                        <span className="text-[10px] text-muted">
+                                          1st buy: <span className="text-white/60">{new Date(token.first_buy_at).toLocaleDateString()}</span>
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -1622,13 +1692,13 @@ export default function App() {
                       </div>
                       <p className="text-sm text-muted">
                         Click on a wallet to see details, PnL chart, and token history
-                      </p>
-                    </div>
+              </p>
+            </div>
                   )}
-                </div>
-              </div>
-            )}
           </div>
+        </div>
+            )}
+      </div>
         )}
 
         {/* ==================== SETTINGS TAB ==================== */}
