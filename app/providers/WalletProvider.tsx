@@ -1,8 +1,10 @@
 'use client'
 
-import { FC, ReactNode, useMemo } from 'react'
+import { FC, ReactNode, useMemo, useCallback } from 'react'
 import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom'
+import { WalletError } from '@solana/wallet-adapter-base'
 import { clusterApiUrl } from '@solana/web3.js'
 
 // Import wallet adapter CSS
@@ -16,15 +18,23 @@ export const WalletProvider: FC<Props> = ({ children }) => {
   // Use mainnet for production
   const endpoint = useMemo(() => clusterApiUrl('mainnet-beta'), [])
   
-  // Modern wallets (Phantom, Solflare, Backpack, etc.) register themselves
-  // via the Wallet Standard protocol and are auto-detected.
-  // No manual adapters needed — passing an empty array avoids conflicts
-  // that caused Phantom to fail in some browsers (e.g. Firefox).
-  const wallets = useMemo(() => [], [])
+  // Include PhantomWalletAdapter as legacy fallback.
+  // Modern wallets also register via Wallet Standard (auto-detected).
+  // The library deduplicates: Wallet Standard takes priority when available.
+  // In browsers where Wallet Standard registration fails (e.g. Firefox),
+  // the legacy adapter provides a direct connection via window.phantom.solana.
+  const wallets = useMemo(() => [
+    new PhantomWalletAdapter(),
+  ], [])
+
+  // Log wallet errors for debugging
+  const onError = useCallback((error: WalletError) => {
+    console.warn('[Wallet] Connection error:', error.message || error)
+  }, [])
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <SolanaWalletProvider wallets={wallets} autoConnect>
+      <SolanaWalletProvider wallets={wallets} autoConnect onError={onError}>
         <WalletModalProvider>
           {children}
         </WalletModalProvider>

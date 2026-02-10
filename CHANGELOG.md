@@ -4,6 +4,18 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.9] - 2026-02-10
+
+### Fixed
+- **Phantom Wallet connection in Firefox** — Phantom's browser extension fails to register via Wallet Standard in some browsers (especially Firefox), causing silent connection failures
+  - Added `PhantomWalletAdapter` as legacy fallback (library auto-deduplicates when Wallet Standard works)
+  - Implemented automatic direct-connect fallback via `window.phantom.solana` when the standard adapter fails
+  - Added 8-second timeout detection for unresponsive extensions
+  - Connection error banner with actionable hints (refresh, re-enable extension, try Solflare)
+  - "Try Again" retry button for manual reconnection attempts
+  - Visual connecting spinner on the Connect Wallet button
+  - `onError` handler in WalletProvider for better error logging
+
 ## [0.9.8] - 2026-02-08
 
 ### Changed

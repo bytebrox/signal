@@ -1,7 +1,7 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Nav from '@/app/components/Nav'
 import Footer from '@/app/components/Footer'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -13,7 +13,7 @@ import { User, FavoriteWallet } from '@/lib/types'
 
 export default function App() {
   // Wallet connection
-  const { publicKey, connected, disconnect } = useWallet()
+  const { publicKey, connected, connecting, disconnect, select, connect, wallets } = useWallet()
   const { setVisible } = useWalletModal()
   
   // User state
@@ -27,6 +27,104 @@ export default function App() {
   
   // Navigation state
   const [activeTab, setActiveTab] = useState<'dashboard' | 'wallets' | 'settings'>('dashboard')
+
+  // Connection error handling
+  const [connectError, setConnectError] = useState<string | null>(null)
+  const [retrying, setRetrying] = useState(false)
+  const wasConnectingRef = useRef(false)
+
+  // Detect failed connection attempts (connecting -> not connecting, but not connected)
+  useEffect(() => {
+    if (connecting) {
+      wasConnectingRef.current = true
+      setConnectError(null)
+    }
+    if (!connecting && wasConnectingRef.current && !connected) {
+      wasConnectingRef.current = false
+      // Connection attempt ended without success — try direct fallback
+      attemptDirectConnect()
+    }
+    if (connected) {
+      wasConnectingRef.current = false
+      setConnectError(null)
+    }
+  }, [connecting, connected]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Direct Phantom connection fallback for browsers where adapter fails (Firefox)
+  const attemptDirectConnect = useCallback(async () => {
+    const phantom = (window as any).phantom?.solana || (window as any).solana
+    if (!phantom?.isPhantom) {
+      setConnectError(
+        'Wallet connection failed. Please refresh the page and try again. ' +
+        'If the issue persists, try Solflare as an alternative.'
+      )
+      return
+    }
+
+    try {
+      console.log('[Wallet] Standard connection failed, attempting direct Phantom connect...')
+      // Connect directly via Phantom's injected provider
+      const resp = await Promise.race([
+        phantom.connect(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+      ])
+      
+      if (resp?.publicKey) {
+        console.log('[Wallet] Direct Phantom connect succeeded, syncing adapter...')
+        // Find and select Phantom in the adapter to sync state
+        const phantomWallet = wallets.find(
+          w => w.adapter.name.toLowerCase().includes('phantom')
+        )
+        if (phantomWallet) {
+          select(phantomWallet.adapter.name)
+          // Small delay to let the adapter register the selection
+          await new Promise(r => setTimeout(r, 500))
+          try { await connect() } catch { /* adapter may already be connected */ }
+        }
+      }
+    } catch (err: any) {
+      if (err?.message === 'timeout') {
+        setConnectError(
+          'Phantom is not responding. This is a known issue with Phantom in some browsers. ' +
+          'Please try: 1) Refresh the page, 2) Disable and re-enable the Phantom extension, ' +
+          'or 3) Use Solflare as an alternative.'
+        )
+      } else if (err?.code === 4001) {
+        // User rejected — not an error
+        setConnectError(null)
+      } else {
+        console.warn('[Wallet] Direct connect failed:', err)
+        setConnectError(
+          'Connection failed. Please refresh the page and try again. ' +
+          'If the problem persists in this browser, try using Solflare instead.'
+        )
+      }
+    }
+  }, [wallets, select, connect])
+
+  // Manual retry handler
+  const handleRetryConnect = async () => {
+    setRetrying(true)
+    setConnectError(null)
+    try {
+      // Try through the adapter first
+      const phantomWallet = wallets.find(
+        w => w.adapter.name.toLowerCase().includes('phantom')
+      )
+      if (phantomWallet) {
+        select(phantomWallet.adapter.name)
+        await new Promise(r => setTimeout(r, 300))
+        await connect()
+      } else {
+        // Fallback to direct
+        await attemptDirectConnect()
+      }
+    } catch {
+      await attemptDirectConnect()
+    } finally {
+      setRetrying(false)
+    }
+  }
 
   // Handle wallet connection - create/get user in DB
   const handleUserLogin = useCallback(async (walletAddress: string) => {
@@ -204,11 +302,55 @@ export default function App() {
               onClick={handleConnectClick}
               className="px-8 py-4 bg-white text-black font-medium rounded-full hover:bg-white/90 transition-colors text-lg"
             >
-              Connect Wallet
+              {connecting || retrying ? (
+                <span className="flex items-center gap-2">
+                  <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Connecting...
+                </span>
+              ) : 'Connect Wallet'}
             </button>
             <p className="text-xs text-muted mt-4">
               Supports Phantom, Solflare, and other Solana wallets
             </p>
+
+            {/* Connection Error Banner */}
+            <AnimatePresence>
+              {connectError && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-6 max-w-lg mx-auto p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-red-300">{connectError}</p>
+                      <div className="flex gap-3 mt-3">
+                        <button
+                          onClick={handleRetryConnect}
+                          disabled={retrying}
+                          className="px-4 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded-lg text-red-300 text-xs font-medium transition-colors"
+                        >
+                          {retrying ? 'Retrying...' : 'Try Again'}
+                        </button>
+                        <button
+                          onClick={() => setConnectError(null)}
+                          className="px-4 py-1.5 bg-surface hover:bg-white/10 border border-border rounded-lg text-muted text-xs font-medium transition-colors"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
 
