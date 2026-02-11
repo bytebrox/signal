@@ -4,6 +4,13 @@ All notable changes to SIGNAL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.10] - 2026-02-11
+
+### Added
+- **Footer contract address** — Contract address (CA) in the footer; click to copy full address. Display is abbreviated (e.g. `000000...000000`); clipboard always gets the full value. Visual “Copied!” feedback for 2 seconds after copy.
+
+- **Share preview image** — `banner.png` set as Open Graph and Twitter card image. Links shared on X.com and Telegram (and other platforms using OG) now show the banner as preview image; metadata updated in `layout.tsx`.
+
 ## [0.9.9] - 2026-02-10
 
 ### Fixed

@@ -16,11 +16,13 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'SIGNAL',
     url: 'https://justasignal.com',
+    images: ['/banner.png'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SIGNAL — Smart Money Intelligence',
     description: 'Follow the insiders. Track wallets that consistently profit on Solana.',
+    images: ['/banner.png'],
   },
 }
 
