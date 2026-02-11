@@ -8,7 +8,7 @@ We take security seriously at SIGNAL. If you discover a security vulnerability, 
 
 **Do NOT open a public issue for security vulnerabilities.**
 
-Or DM us on X/Twitter: [@bytebrox](https://x.com/bytebrox)
+Or DM us on X/Twitter: [@bytebrox](https://x.com/i/communities/2021579927926059257)
 
 ### What to Include
 

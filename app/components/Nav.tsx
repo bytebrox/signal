@@ -64,7 +64,7 @@ export default function Nav({
           <a href={howHref} className="hover:text-white transition-colors duration-300">How it works</a>
           <Link href="/docs" className={`${activePage === 'docs' ? 'text-white' : 'hover:text-white'} transition-colors duration-300`}>Docs</Link>
           <a href="https://github.com/bytebrox/signal" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors duration-300">GitHub</a>
-          <a href="https://x.com/bytebrox" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors duration-300">Twitter</a>
+          <a href="https://x.com/i/communities/2021579927926059257" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors duration-300">Twitter</a>
         </div>
 
         {/* Right Side */}
@@ -103,7 +103,7 @@ export default function Nav({
               <a href={howHref} onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-muted hover:text-white hover:bg-white/5 rounded-xl transition-colors">How it works</a>
               <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className={`px-4 py-3 text-sm ${activePage === 'docs' ? 'text-white' : 'text-muted hover:text-white'} hover:bg-white/5 rounded-xl transition-colors`}>Docs</Link>
               <a href="https://github.com/bytebrox/signal" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-muted hover:text-white hover:bg-white/5 rounded-xl transition-colors">GitHub</a>
-              <a href="https://x.com/bytebrox" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-muted hover:text-white hover:bg-white/5 rounded-xl transition-colors">Twitter</a>
+              <a href="https://x.com/i/communities/2021579927926059257" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 text-sm text-muted hover:text-white hover:bg-white/5 rounded-xl transition-colors">Twitter</a>
             </div>
           </motion.div>
         )}

@@ -127,7 +127,7 @@ No passwords, no emails. Users connect their Solana wallet and everything is tie
 
 - **Website**: [justasignal.com](https://justasignal.com)
 - **GitHub**: [github.com/bytebrox/signal](https://github.com/bytebrox/signal)
-- **Community**: [x.com/bytebrox](https://x.com/bytebrox)
+- **Community**: [x.com/bytebrox](https://x.com/i/communities/2021579927926059257)
 
 ## Contributing
 

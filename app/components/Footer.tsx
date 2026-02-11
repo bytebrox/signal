@@ -42,7 +42,7 @@ export default function Footer() {
 
         <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-8 text-sm text-white/40">
           <a href="https://github.com/bytebrox/signal" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
-          <a href="https://x.com/bytebrox" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</a>
+          <a href="https://x.com/i/communities/2021579927926059257" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</a>
           <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
           <button
             type="button"
