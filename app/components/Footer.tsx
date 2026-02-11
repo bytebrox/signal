@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 
-const CONTRACT_ADDRESS = '000000000000000000000000000000'
+const CONTRACT_ADDRESS = 'DU6qS6L15J1mtYsxzgSNM4XhB1dfFSB2HK3H2UVHpump'
 
 function shortenAddress(addr: string, head = 6, tail = 6): string {
   if (addr.length <= head + tail) return addr
